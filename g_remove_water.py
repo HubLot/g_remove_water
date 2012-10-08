@@ -24,7 +24,9 @@ To remove molecules, it's based on Z mean of the upper and lower leaflet.
 At the end, the residus and the atoms are re-numbered and the number of atoms at the 2nd
 line is updated.
 Title and box vectors are kept.
-The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the option --refatom
+The atom to determine the upper and lower leaflet (typically the phosphate) can be set 
+with the option --lipid_atom. Same thing for the reference atom of water (--water_atom). 
+For all-atoms files, you have to use the oxygen atom as a reference.
 """
 
 __author__ = "Marc Gueroult & Hubert Santuz"
@@ -50,12 +52,14 @@ def isfile(path):
 def define_options():
     """Define the script options."""
     parser = argparse.ArgumentParser(description=__description__)
-    parser.add_argument("-f", action="store", type=isfile, dest = "filin",required=True,
+    parser.add_argument("-f", action="store", type=isfile, dest = "filin",required=True, metavar = "coord.gro",
             help="The Structure file newly solvated (.gro) REQUIRED")
-    parser.add_argument("-o", action="store", type=str, dest = "filout",
+    parser.add_argument("-o", action="store", type=str, dest = "filout", metavar = "out.gro",
             help="The Output file (.gro)",default="out.gro")
-    parser.add_argument("--refatom", action="store", type=str, dest = "refatom",
+    parser.add_argument("--lipid_atom", action="store", type=str, dest = "lipid_atom", metavar = "P1",
             help="The reference atom for the bilayer (P1 by default)", default="P1")
+    parser.add_argument("--water_atom", action="store", type=str, dest = "water_atom", metavar = "OW",
+            help="The reference atom for the water. Use the oxygen. (OW by default)", default="OW")
     return parser        
 
 def Zmean_values(lines,atm_ref):
@@ -92,7 +96,7 @@ def Zmean_values(lines,atm_ref):
     return Zlower,Zupper
 
 
-def remove_water(lines, Zupper, Zlower):
+def remove_water(lines, Zupper, Zlower, atom_water):
     """Return  a list containing all lines of the gro file to keep"""
 
 
@@ -109,7 +113,7 @@ def remove_water(lines, Zupper, Zlower):
         to_store = True  #Does we store the line in the result ?
         atom_name = i[10:15].strip()
         ref_resnumber = int(i[0:5]) #Residue number of the current atoms
-        if atom_name == "OW":               #Oxygen of the water molecule
+        if atom_name == atom_water:  #Oxygen of the water molecule
             z = float(i[37:44])
             if z > Zlower and z < Zupper:    # Water in bilayer
                 resnumber = int(i[0:5])     # Store the residue number of the water to removed
@@ -192,31 +196,37 @@ if __name__ == '__main__' :
     
     filin = args.filin
     filout = args.filout
-    refatom = args.refatom
+    lipid_atom = args.lipid_atom
+    water_atom = args.water_atom
 
 
     print "The input coordinate file is {0}".format(filin)
     print "The output file will be {0}".format(filout)
-    print "The reference atom for the lipid bilayer is {0}".format(refatom)
+    print "The reference atom for the lipid bilayer is {0}".format(lipid_atom)
+    print "The reference atom for the water is {0}".format(water_atom)
 
     f=open(filin,'r')
     data=f.readlines()
     f.close()
 
     print
-    print "Checking the reference atom...",
-    if not find_ref_atom(data,refatom):
+    print "Checking the reference atoms...",
+    if not find_ref_atom(data,lipid_atom):
         print "Oops!"
-        print "The reference atom {0} for the bilayer was not find. Exiting...".format(refatom)
+        print "The reference atom {0} for the bilayer was not find. Exiting...".format(lipid_atom)
+        sys.exit()
+    if not find_ref_atom(data,water_atom):
+        print "Oops!"
+        print "The reference atom {0} for the water was not find. Exiting...".format(lipid_atom)
         sys.exit()
     print "Done!"
     
     #Get Z mean for  the upper and lower leaflet
-    Zlower, Zupper = Zmean_values(data, refatom)
+    Zlower, Zupper = Zmean_values(data, lipid_atom)
 
     print "Removing water inside the bilayer...",
     #Remove water molecules inside the bilayer
-    temp_lines,water_removed = remove_water(data,Zupper,Zlower)
+    temp_lines,water_removed = remove_water(data,Zupper,Zlower,water_atom)
     print "Done!"
 
 

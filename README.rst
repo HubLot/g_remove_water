@@ -5,24 +5,31 @@ Takes a gro file containing a bilayer and remove any water
 molecules inside the bilayer.
 
 To remove molecules, it's based on Z mean of the upper and lower leaflet.
+
 At the end, the residus and the atoms are re-numbered and the number of atoms at the 2nd line is updated.
 Title and box vectors are kept.
 
-The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the option --refatom (default = P1)
+The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the lipid_atom option (default = P1)
+
+The atom to determine the water molecule can be set with --water_atom option.
+For all-atoms files, you have to use the oxygen atom as a reference.
 
 
 
 Usage
 -----
-g_remove_water.py [-h] -f FILIN [-o FILOUT] [--refatom REFATOM]
+g_remove_water.py [-h] -f coord.gro [-o out.gro] [--lipid_atom P1] [--water_atom OW]
 
 required arguments:
   -f FILIN           The Structure file newly solvated (.gro)
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -o FILOUT          The Output file (.gro)
-  --refatom REFATOM  The reference atom for the bilayer (P1 by default)
+  -h, --help       show this help message and exit
+  -o out.gro       The Output file (.gro)
+  --lipid_atom P1  The reference atom for the bilayer (P1 by default)
+  --water_atom OW  The reference atom for the water. Use the oxygen. (OW by
+                   default)
+
 
 
 Licence
