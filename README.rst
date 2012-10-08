@@ -14,11 +14,14 @@ The atom to determine the upper and lower leaflet (typically the phosphate) can 
 The atom to determine the water molecule can be set with --water_atom option.
 For all-atoms files, you have to use the oxygen atom as a reference.
 
-
+Water molecules can also be removed if they are in a sphere centered on the
+geometrical center of the atom with a given set of residue name. Use --sphere
+to set the list of residue names to use for the center calculation and
+--radius to set the radius of the sphere.
 
 Usage
 -----
-g_remove_water.py [-h] -f coord.gro [-o out.gro] [--lipid_atom P1] [--water_atom OW]
+g_remove_water.py [-h] -f coord.gro [-o out.gro] [--water_atom OW] [(--lipid_atom P1 | --sphere RES [RES ...] --radius RADIUS)]
 
 required arguments:
     -f FILE             The Structure file newly solvated (.gro)
@@ -28,7 +31,14 @@ optional arguments:
     -o FILE           The Output file (.gro)
     --lipid_atom P1     The reference atom for the bilayer (P1 by default)
     --water_atom OW      The reference atom for the water. Use the oxygen. (OW by default)
-
+    --sphere RESNAME [RESNAME ...]
+                        Remove water molecules if they are in a sphere
+                        centered on the geometric center of atoms with the
+                        given residue names. You need the --radius option to
+                        be filled.
+  --radius RADIUS       Remove water molecules if they are in a sphere of this
+                        radius centered on a given set of residue names. You
+                        need the --sphere option to be set.
 
 
 Licence

@@ -14,6 +14,10 @@
 #    A copy of the GNU General Public License is available at
 #    http://www.gnu.org/licenses/gpl-3.0.html
 
+# This include makes that all divisions are real division even if the two
+# members are integers. Use the euclidean division operator // to get euclidean
+# divisions.
+from __future__ import division
 
 __description__ = \
 """
@@ -27,6 +31,12 @@ Title and box vectors are kept.
 The atom to determine the upper and lower leaflet (typically the phosphate) can be set 
 with the option --lipid_atom. Same thing for the reference atom of water (--water_atom). 
 For all-atoms files, you have to use the oxygen atom as a reference.
+The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the option --refatom.
+
+Water molecules can also be removed if they are in a sphere centered on the
+geometrical center of the atom with a given set of residue name. Use --sphere
+to set the list of residue names to use for the center calculation and --radius
+to set the radius of the sphere.
 """
 
 __author__ = "Marc Gueroult & Hubert Santuz"
@@ -36,7 +46,9 @@ import sys
 import os
 import argparse
 
-
+# Index of the coordinate slices in gro file atom line
+COORDINATE_INDEX = ((20, 28), (28, 36), (36, 44))
+	
 def isfile(path):
     """Check if path is an existing file. 
     If not, raise an error. Else, return the path."""
@@ -59,8 +71,23 @@ def define_options():
     parser.add_argument("--lipid_atom", action="store", type=str, dest = "lipid_atom", metavar = "P1",
             help="The reference atom for the bilayer (P1 by default)", default="P1")
     parser.add_argument("--water_atom", action="store", type=str, dest = "water_atom", metavar = "OW",
-            help="The reference atom for the water. Use the oxygen. (OW by default)", default="OW")
-    return parser        
+            help="The reference atom for the water. Use the oxygen. (OW by default)", default="OW")     
+    parser.add_argument("--sphere", type=str, nargs='+', default=None,
+            metavar="RESNAME",
+            help=("Remove water molecules if they are in a sphere centered on "
+                  "the geometric center of atoms with the given residue names. "
+                  "You need the --radius option to be filled."))
+    parser.add_argument("--radius", type=float, default=None,
+            help=("Remove water molecules if they are in a sphere of this "
+                  "radius centered on a given set of residue names. You need "
+                  "the --sphere option to be set."))
+    args = parser.parse_args()
+    # --sphere and --radius have to be used together, let's check this
+    if ((args.sphere is None and not args.radius is None) or
+            (args.radius is None and not args.sphere is None)) :
+        raise parser.error(("You need to define both --sphere and --radius in "
+                            "order to remove water molecules on a sphere."))
+    return args
 
 def Zmean_values(lines,atm_ref):
     """Return the Z mean for the upper and lower leaflet"""
@@ -133,6 +160,72 @@ def remove_water(lines, Zupper, Zlower, atom_water):
 
     return reslines, nb_res_water
 
+def geometric_center(lines, resnames) :
+    """
+    Get the isobarycenter of the atoms having the given residue name.
+
+    The "resname" argument is a list od residue names. An atom is taken into
+    account if its residue name is in the list.
+    """
+    iso_coords = [0] * 3
+    natoms = 0
+    # Sum up the coordinates of the atoms of interest
+    for line in lines[2:-1] :
+        resname = line[5:10].strip() # TODO check the end index
+        if resname in resnames :
+            for index, (begin, end) in enumerate(COORDINATE_INDEX) :
+                iso_coords[index] += float(line[begin:end])
+            natoms += 1
+    # Do the averaging
+    for i in xrange(3) :
+        iso_coords[i] /= natoms
+    return iso_coords
+
+def sq_distance(point_a, point_b) :
+    """
+    Compute the square of the euclidean distance between two points.
+    """
+    return sum((a-b)*(a-b) for a, b in zip(point_a, point_b))
+
+def remove_sphere(lines, resnames, center, radius) :
+    """
+    Remove residue when at least one of its atoms is inside the given sphere.
+    Return a list of all the gro file lines to keep.
+    """
+    # We want to include the two first lines anyway
+    reslines = []
+    reslines.append(lines[0][:-1]) 
+    reslines.append(lines[1][:-1]) 
+    # Comparing squared distances instead of distances avoid to compute a bunch
+    # load of square roots
+    sq_radius = radius*radius 
+    # When an atom of interest is inside the sphere we want to remove the whole
+    # residue. Therefor we must remove the previous atoms of the residue that
+    # we already included and inhibit the inclusion of the following ones.
+    inhibit_resid = None
+    for line in lines[2:-1] :
+        resname = line[5:10].strip() # TODO check the end index
+        resid = int(line[0:5])
+        coords = [float(line[begin:end]) for begin, end in COORDINATE_INDEX]
+        sq_dist = sq_distance(center, coords)
+        if (resname in resnames 
+                and ((not inhibit_resid is None and resid == inhibit_resid) 
+                     or sq_distance(center, coords) <= sq_radius)) :
+            # The atome is inside the sphere
+            # Remove previously added atoms from the residue
+            while int(reslines[-1][0:5]) == resid :
+                del reslines[-1]
+            # Set the inhibition
+            inhibit_resid = resid
+        else :
+            reslines.append(line[:-1])
+            inhibit_resid = None
+
+    # We want to keep the box definition
+    reslines.append(lines[-1][:-1])
+    # Update the number of atoms
+    reslines[1] = str(len(reslines) - 3)
+    return reslines
 
 def find_ref_atom(lines,ref_atom):
     """Return a boolean wether the "atom" was find in the file"""
@@ -191,8 +284,7 @@ def renumber(lines,start_res=None):
 if __name__ == '__main__' :
 
     #Command line parsing
-    parser = define_options()
-    args = parser.parse_args()
+    args = define_options()
     
     filin = args.filin
     filout = args.filout
@@ -209,28 +301,33 @@ if __name__ == '__main__' :
     data=f.readlines()
     f.close()
 
-    print
-    print "Checking the reference atoms...",
-    if not find_ref_atom(data,lipid_atom):
-        print "Oops!"
-        print "The reference atom {0} for the bilayer was not find. Exiting...".format(lipid_atom)
-        sys.exit()
-    if not find_ref_atom(data,water_atom):
-        print "Oops!"
-        print "The reference atom {0} for the water was not find. Exiting...".format(lipid_atom)
-        sys.exit()
-    print "Done!"
-    
-    #Get Z mean for  the upper and lower leaflet
-    Zlower, Zupper = Zmean_values(data, lipid_atom)
+    if args.sphere is None :
+        print "The reference atom for the lipid bilayer is {0}".format(refatom)
+        print
+        print "Checking the reference atom...",
+        if not find_ref_atom(data,refatom):
+            print "Oops!"
+            print "The reference atom {0} for the bilayer was not find. Exiting...".format(lipid_atom)
+            sys.exit()
+        print "Done!"
+        
+        #Get Z mean for  the upper and lower leaflet
+        Zlower, Zupper = Zmean_values(data, lipid_atom)
 
-    print "Removing water inside the bilayer...",
-    #Remove water molecules inside the bilayer
-    temp_lines,water_removed = remove_water(data,Zupper,Zlower,water_atom)
-    print "Done!"
+        print "Removing water inside the bilayer...",
+        #Remove water molecules inside the bilayer
+        temp_lines,water_removed = remove_water(data,Zupper,Zlower,water_atom)
+        print "Done!"
+    else :
+        print "Get the center of the sphere...",
+        center = geometric_center(data, args.sphere)
+        print "Done! The center is {0}".format(center)
+        print "Remove water molecules inside the sphere..."
+        temp_lines = remove_sphere(data, [water_atom], center, args.radius)
+        water_removed = len(data) - len(temp_lines)
+        print "Done!"
 
-
-    first_res_number = int(data[3][0:5])
+    first_res_number = int(data[2][0:5])
     print "Renumber residues and atoms...",
     output = renumber(temp_lines,first_res_number)
     print "Done!"
@@ -243,6 +340,7 @@ if __name__ == '__main__' :
     #Write in the output file
     f=open(filout,'w')
     f.write('\n'.join(output))
+    f.write("\n")
     f.close()
 
 
