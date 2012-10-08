@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#    This program is free software: you can redistribute it and/or modify  
+#    it under the terms of the GNU General Public License as published by   
+#    the Free Software Foundation, either version 3 of the License, or      
+#    (at your option) any later version.                                    
+#                                                                           
+#    This program is distributed in the hope that it will be useful,        
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of         
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          
+#    GNU General Public License for more details.                           
+#                                                                           
+#    A copy of the GNU General Public License is available at
+#    http://www.gnu.org/licenses/gpl-3.0.html
+
+
 __description__ = \
 """
 g_remove_water.py
@@ -10,7 +24,7 @@ To remove molecules, it's based on Z mean of the upper and lower leaflet.
 At the end, the residus and the atoms are re-numbered and the number of atoms at the 2nd
 line is updated.
 Title and box vectors are kept.
-The atom to determine the upper and lower leaflet can be set with the option --refatom
+The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the option --refatom
 """
 
 __author__ = "Marc Gueroult & Hubert Santuz"
@@ -41,7 +55,7 @@ def define_options():
     parser.add_argument("-o", action="store", type=str, dest = "filout",
             help="The Output file (.gro)",default="out.gro")
     parser.add_argument("--refatom", action="store", type=str, dest = "refatom",
-            help="The reference atom for the bilayer", default="P1")
+            help="The reference atom for the bilayer (P1 by default)", default="P1")
     return parser        
 
 def Zmean_values(lines,atm_ref):
