@@ -116,6 +116,50 @@ def find_ref_atom(lines,ref_atom):
     return False
 
 
+def renumber(lines,start_res=None):
+    """Renum the atoms and the residus in a file"""
+
+    out = []
+    #Appends the first 2 lines (ie Title and Number of atoms)
+    out.append(lines[0].strip()) 
+    out.append(lines[1].strip()) 
+ 
+    start = True
+    output_atom = 0
+
+    for i in lines[2:-1]: #Discard for 2 lines and the last one
+        #If first residue, start the counter regarding the number of the starting residue
+        if start:
+            start = False
+            current_res = i[0:5]
+            if start_res:
+                output_res = start_res
+            else:
+                output_res = 1
+
+        #New residue
+        if i[0:5] != current_res:
+            if output_res == 99999: #cannot go to 100000
+                output_res = 1
+            else:
+                output_res +=1
+            current_res = i[0:5]
+
+        if output_atom == 99999: #cannot go to 100000
+            output_atom = 1
+        else:   
+            output_atom +=1
+
+        #Append the line with the correct number of residu and atom
+        out.append("%5i%s%5i%s" % (output_res,i[5:15],output_atom,i[20:]))
+
+
+    #Save the last line (box vectors)
+    out.append(lines[-1])
+
+    return out
+
+
 if __name__ == '__main__' :
 
     #Command line parsing
@@ -148,7 +192,13 @@ if __name__ == '__main__' :
 
     print "Removing water inside the bilayer...",
     #Remove water molecules inside the bilayer
-    output,water_removed = remove_water(data,Zupper,Zlower)
+    temp_lines,water_removed = remove_water(data,Zupper,Zlower)
+    print "Done!"
+
+
+    first_res_number = int(data[3][0:5])
+    print "Renumber residues and atoms...",
+    output = renumber(temp_lines,first_res_number)
     print "Done!"
 
     print
