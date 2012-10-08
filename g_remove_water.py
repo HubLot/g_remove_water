@@ -1,7 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Script which removes water molecules inside a membrane (after doing genbox for solvation for example)"""
+__description__ = \
+"""
+g_remove_water.py
+
+Takes a gro file containing a bilayer and remove any water molecules inside the bilayer.
+To remove molecules, it's based on Z mean of the upper and lower leaflet.
+At the end, the residus and the atoms are re-numbered and the number of atoms at the 2nd
+line is updated.
+Title and box vectors are kept.
+"""
 
 __author__ = "Marc Gueroult & Hubert Santuz"
 __version__ = "1.0"
