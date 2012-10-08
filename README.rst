@@ -21,14 +21,13 @@ Usage
 g_remove_water.py [-h] -f coord.gro [-o out.gro] [--lipid_atom P1] [--water_atom OW]
 
 required arguments:
-  -f FILIN           The Structure file newly solvated (.gro)
+    -f FILIN           The Structure file newly solvated (.gro)
 
 optional arguments:
-  -h, --help       show this help message and exit
-  -o out.gro       The Output file (.gro)
-  --lipid_atom P1  The reference atom for the bilayer (P1 by default)
-  --water_atom OW  The reference atom for the water. Use the oxygen. (OW by
-                   default)
+    -h, --help       show this help message and exit
+    -o out.gro       The Output file (.gro)
+    --lipid_atom P1  The reference atom for the bilayer (P1 by default)
+    --water_atom OW  The reference atom for the water. Use the oxygen. (OW by default)
 
 
 
