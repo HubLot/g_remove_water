@@ -10,6 +10,7 @@ To remove molecules, it's based on Z mean of the upper and lower leaflet.
 At the end, the residus and the atoms are re-numbered and the number of atoms at the 2nd
 line is updated.
 Title and box vectors are kept.
+The atom to determine the upper and lower leaflet can be set with the option --refatom
 """
 
 __author__ = "Marc Gueroult & Hubert Santuz"
@@ -34,7 +35,7 @@ def isfile(path):
 
 def define_options():
     """Define the script options."""
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument("-f", action="store", type=isfile, dest = "filin",required=True,
             help="The Structure file newly solvated (.gro) REQUIRED")
     parser.add_argument("-o", action="store", type=str, dest = "filout",
