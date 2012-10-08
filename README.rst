@@ -27,18 +27,18 @@ required arguments:
     -f FILE             The Structure file newly solvated (.gro)
 
 optional arguments:
-    -h, --help       show this help message and exit
-    -o FILE           The Output file (.gro)
-    --lipid_atom P1     The reference atom for the bilayer (P1 by default)
-    --water_atom OW      The reference atom for the water. Use the oxygen. (OW by default)
-    --sphere RESNAME [RESNAME ...]
-                        Remove water molecules if they are in a sphere
-                        centered on the geometric center of atoms with the
-                        given residue names. You need the --radius option to
-                        be filled.
-  --radius RADIUS       Remove water molecules if they are in a sphere of this
-                        radius centered on a given set of residue names. You
-                        need the --sphere option to be set.
+    -h, --help                     Show this help message and exit
+    -o FILE                        The Output file (.gro)
+    --lipid_atom P1                The reference atom for the bilayer (P1 by default)
+    --water_atom OW                The reference atom for the water. Use the oxygen.
+                                   (OW by default)
+    --sphere RESNAME [RESNAME ...] Remove water molecules if they are in a
+                                   sphere centered on the geometric center of
+                                   atoms with the given residue names. You
+                                   need the --radius option to be filled.
+    --radius RADIUS                Remove water molecules if they are in a sphere of this
+                                   radius centered on a given set of residue names. You
+                                   need the --sphere option to be set.
 
 
 Licence
