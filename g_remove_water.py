@@ -31,7 +31,7 @@ Title and box vectors are kept.
 The atom to determine the upper and lower leaflet (typically the phosphate) can be set 
 with the option --lipid_atom. Same thing for the reference atom of water (--water_atom). 
 For all-atoms files, you have to use the oxygen atom as a reference.
-The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the option --refatom.
+The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the option --lipd_atom.
 
 Water molecules can also be removed if they are in a sphere centered on the
 geometrical center of the atom with a given set of residue name. Use --sphere
@@ -302,10 +302,10 @@ if __name__ == '__main__' :
     f.close()
 
     if args.sphere is None :
-        print "The reference atom for the lipid bilayer is {0}".format(refatom)
+        print "The reference atom for the lipid bilayer is {0}".format(lipd_atom)
         print
         print "Checking the reference atom...",
-        if not find_ref_atom(data,refatom):
+        if not find_ref_atom(data,lipd_atom):
             print "Oops!"
             print "The reference atom {0} for the bilayer was not find. Exiting...".format(lipid_atom)
             sys.exit()
