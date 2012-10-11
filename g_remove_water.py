@@ -39,7 +39,7 @@ to set the list of residue names to use for the center calculation and --radius
 to set the radius of the sphere.
 """
 
-__author__ = "Marc Gueroult & Hubert Santuz"
+__author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
 __version__ = "1.0"
 
 import sys
