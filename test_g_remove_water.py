@@ -60,33 +60,31 @@ class TestGeneral(TestCase) :
         start_res argument.
         """
         path = os.path.join(REFDIR, "regular.gro")
-        lines = open(path).readlines()
-        # Remove some residues
         removed_res = (10, 50, 60)
-        keep = lines[:2] + [line for line in lines[2:-1]
-                if not int(line[0:5]) in removed_res] + [line[-1]]
-        # Renumber residues and atoms
-        renumbered = grw.renumber(keep)
+        # Remove some residues and renumber atoms and residues
+        with open(path) as infile :
+            renumbered = _create_runumbered(infile, removed_res)
         # Check numbering
         # (number of atom per residue, number of residue)
         topology = ((52, 72 - len(removed_res)), (3, 3739))
-        for line_number, (ref_resid, line) \
-                in enumerate(zip(residue_numbers(topology, 1),
-                    renumbered[2:-1])) :
-            resid = int(line[0:5])
-            atomid = int(line[15:20])
-            ref_atomid = line_number + 1
-            print line[:-1]
-            # Check the residue
-            self.assertEqual(resid, ref_resid,
-                    ("Resisue ID is wrong after renumbering: "
-                    "{0} instead of {1} at line {2}").format(
-                        resid, ref_resid, line_number + 2))
-            # Check the atom
-            self.assertEqual(atomid, ref_atomid,
-                    ("Atom ID is wrong after renumbering: "
-                    "{0} instead of {1} at line {2}").format(
-                        atomid, ref_atomid, line_number + 2))
+        _test_renumber(renumbered, topology, 1)
+
+    def test_renumber_start_res(self) :
+        """
+        Test the atom renumbering with the renumber function with the
+        start_res argument. This is testing both the start-res argument and the
+        ability to handle residue number bigger than 99999.
+        """
+        path = os.path.join(REFDIR, "regular.gro")
+        removed_res = (10, 50, 60)
+        start_res = 98999
+        # Remove some residues and renumber atoms and residues
+        with open(path) as infile :
+            renumbered = _create_runumbered(infile, removed_res, start_res)
+        # Check numbering
+        # (number of atom per residue, number of residue)
+        topology = ((52, 72 - len(removed_res)), (3, 3739))
+        _test_renumber(renumbered, topology, start_res)
 
 
 class TestSlice(TestCase) :
@@ -131,6 +129,51 @@ def residue_numbers(topology, start_res=1) :
                 resid = 1
             for atoms in xrange(natoms) :
                 yield resid
+
+def _create_runumbered(infile, removed_res, start_res=None) :
+    """
+    Remove residues from a structure and renumber the atoms and residues.
+
+    :Parameters:
+        - infile: the opened file to read
+        - remove_res: a list of resid to remove from the structure
+        - start_res: the initial residue number in the renumbered structure
+
+    :Returns:
+        - the lines from the renumbered structure
+    """
+    lines = infile.readlines()
+    # Remove some residues
+    keep = lines[:2] + [line for line in lines[2:-1]
+            if not int(line[0:5]) in removed_res] + [line[-1]]
+    # Renumber residues and atoms
+    renumbered = grw.renumber(keep, start_res)
+    return renumbered
+
+def _test_renumber(lines, topology, start_res) :
+    """
+    Test atom renumbering in various conditions.
+
+    :Parameters:
+        - start_res: the initial residue number in the renumbered structure
+    """
+    for line_number, (ref_resid, line) \
+            in enumerate(zip(residue_numbers(topology, start_res),
+                lines[2:-1])) :
+        resid = int(line[0:5])
+        atomid = int(line[15:20])
+        ref_atomid = line_number + 1
+        print line[:-1]
+        # Check the residue
+        assert resid == ref_resid,\
+                ("Resisue ID is wrong after renumbering: "
+                "{0} instead of {1} at line {2}").format(
+                    resid, ref_resid, line_number + 3)
+        # Check the atom
+        assert atomid == ref_atomid,\
+                ("Atom ID is wrong after renumbering: "
+                "{0} instead of {1} at line {2}").format(
+                    atomid, ref_atomid, line_number + 3)
 
 if __name__ == "__main__" :
     main()
