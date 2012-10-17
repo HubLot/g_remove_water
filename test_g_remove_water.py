@@ -54,11 +54,47 @@ class TestGeneral(TestCase) :
         self.assertFalse(grw.find_ref_atom(lines, "AA"),
                 "AA should be ignored in {0} head.".format(path))
 
+    def test_renumber_noarg(self) :
+        """
+        Test the atom renumbering with the renumber function without the
+        start_res argument.
+        """
+        path = os.path.join(REFDIR, "regular.gro")
+        lines = open(path).readlines()
+        # Remove some residues
+        removed_res = (10, 50, 60)
+        keep = lines[:2] + [line for line in lines[2:-1]
+                if not int(line[0:5]) in removed_res] + [line[-1]]
+        # Renumber residues and atoms
+        renumbered = grw.renumber(keep)
+        # Check numbering
+        # (number of atom per residue, number of residue)
+        topology = ((52, 72 - len(removed_res)), (3, 3739))
+        for line_number, (ref_resid, line) \
+                in enumerate(zip(residue_numbers(topology, 1),
+                    renumbered[2:-1])) :
+            resid = int(line[0:5])
+            atomid = int(line[15:20])
+            ref_atomid = line_number + 1
+            print line[:-1]
+            # Check the residue
+            self.assertEqual(resid, ref_resid,
+                    ("Resisue ID is wrong after renumbering: "
+                    "{0} instead of {1} at line {2}").format(
+                        resid, ref_resid, line_number + 2))
+            # Check the atom
+            self.assertEqual(atomid, ref_atomid,
+                    ("Atom ID is wrong after renumbering: "
+                    "{0} instead of {1} at line {2}").format(
+                        atomid, ref_atomid, line_number + 2))
+
+
 class TestSlice(TestCase) :
     """
     Test slice mode specific functions.
     """
     pass
+
 
 class TestSphere(TestCase) :
     """
@@ -66,11 +102,35 @@ class TestSphere(TestCase) :
     """
     pass
 
+
 class TestProgramm(TestCase) :
     """
     Test the program command line.
     """
     pass
+
+
+def residue_numbers(topology, start_res=1) :
+    """
+    Generate residue numbers according to a topology.
+
+    Topology is a list of successive succession of residues described as
+    (number of atom per residue, number of residue). For instance, a succession
+    of 8 residue of 10 atoms each followed by 5 residues of 3 atoms each is
+    described as ((10, 8), (3, 5)).
+
+    :Parameters:
+        - topology: the residue succession as described above
+        - start_res: the number of the first residue
+    """
+    resid = start_res - 1
+    for natoms, nresidues in topology :
+        for residue in xrange(nresidues) :
+            resid += 1
+            if resid > 99999 :
+                resid = 1
+            for atoms in xrange(natoms) :
+                yield resid
 
 if __name__ == "__main__" :
     main()
