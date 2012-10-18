@@ -139,7 +139,7 @@ class TestSphere(TestCase) :
                 ((0, 0, 0), (0, 1, 0), 1),  # Check Y axis
                 ((0, 0, 0), (0, 0, 1), 1),  # Check Z axis
                 # Check a more realistic cases
-                ((0.978, 4.892, 3.889), (2.261, 4.973, 2.441), 3.7493),  
+                ((0.978, 4.892, 3.889), (2.261, 4.973, 2.441), 3.749354),  
                 ((-0.044, 3.691, 2.737), (0.227, 4.160, 2.714), 0.2939),
         )
         for point_a, point_b, ref_value in reference :
@@ -148,6 +148,20 @@ class TestSphere(TestCase) :
                 ("Square distance between {0} and {1} do not match "
                  "expectations with {2} places: {3} instead of {4}.").format(
                          point_a, point_b, PRECISION, value, ref_value))
+
+    def test_geometric_center(self) :
+        """
+        Test the geometric center calculation.
+        """
+        reference = (0.000216667, 0.00045, 5.00003e-05)
+        resnames = ["C60"]
+        path = os.path.join(REFDIR, "center.gro")
+        lines = open(path).readlines()
+        center = grw.geometric_center(lines, resnames)
+        for ref, value in zip(reference, center) :
+            self.assertAlmostEqual(ref, value, PRECISION,
+                    "Geometric center is wrong: {0} instead of {1}".format(
+                        center, reference))
 
 
 class TestProgramm(TestCase) :
