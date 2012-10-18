@@ -2,3 +2,4 @@ test.gro
 out.gro
 *.pyc
 *.swp
+\#*#

@@ -91,7 +91,35 @@ class TestSlice(TestCase) :
     """
     Test slice mode specific functions.
     """
-    pass
+    def test_z_mean_values(self) :
+        """
+        Test the mean Z values returned for each leaflet by z_mean_values.
+
+        The result of the function is compared with the result obtained using
+        the g_traj gromacs tool with the following command::
+
+            echo 0 1 | g_traj -f regular.gro -s regular.gro -n leaflets.ndx  \
+                    -ox regular_com -com -ng 2
+        """
+        reference = (2.14186, 5.71483)
+        # For the record, values for X are (2.23333, 2.5495), values for Y are
+        # (2.688, 2.50058)
+        
+        # Gro files usually store coordinates with decimals. Let's be precise
+        # until the fourth one.
+        places = 4
+
+        path = os.path.join(REFDIR, "regular.gro")
+        lines = open(path).readlines()
+        z_low, z_top = grw.z_mean_values(lines, "P1")
+        self.assertAlmostEqual(reference[0], z_low, places,
+                ("Z mean value for the lower leaflet do not match with "
+                 "{0} places: {1} instead of {2}").format(
+                     places, reference[0], z_low))
+        self.assertAlmostEqual(reference[1], z_top, places,
+                ("Z mean value for the upper leaflet do not match with "
+                 "{0} places: {1} instead of {2}").format(
+                     places, reference[1], z_top))
 
 
 class TestSphere(TestCase) :
