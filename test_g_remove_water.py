@@ -204,6 +204,8 @@ def _test_renumber(lines, topology, start_res) :
     Test atom renumbering in various conditions.
 
     :Parameters:
+        - lines: the lines of the gro file in a list
+        - topology: the residue succession, see :func:`residue_numbers`
         - start_res: the initial residue number in the renumbered structure
     """
     for line_number, (ref_resid, line) \
