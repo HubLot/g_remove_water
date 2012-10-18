@@ -33,6 +33,11 @@ __version__ = "1.0"
 # Path to the directory containing the material for tests
 REFDIR = "test_ressources"
 
+# Gro files usually store coordinates with decimals. Let's be precise
+# until the fourth one.
+PRECISION = 4
+
+
 class TestGeneral(TestCase) :
     """
     Test genral infrastructure that is shared with every modes.
@@ -105,28 +110,44 @@ class TestSlice(TestCase) :
         # For the record, values for X are (2.23333, 2.5495), values for Y are
         # (2.688, 2.50058)
         
-        # Gro files usually store coordinates with decimals. Let's be precise
-        # until the fourth one.
-        places = 4
-
         path = os.path.join(REFDIR, "regular.gro")
         lines = open(path).readlines()
         z_low, z_top = grw.z_mean_values(lines, "P1")
-        self.assertAlmostEqual(reference[0], z_low, places,
+        self.assertAlmostEqual(reference[0], z_low, PRECISION,
                 ("Z mean value for the lower leaflet do not match with "
                  "{0} places: {1} instead of {2}").format(
-                     places, reference[0], z_low))
-        self.assertAlmostEqual(reference[1], z_top, places,
+                     PRECISION, reference[0], z_low))
+        self.assertAlmostEqual(reference[1], z_top, PRECISION,
                 ("Z mean value for the upper leaflet do not match with "
                  "{0} places: {1} instead of {2}").format(
-                     places, reference[1], z_top))
+                     PRECISION, reference[1], z_top))
 
 
 class TestSphere(TestCase) :
     """
     Test sphere mode specific functions.
     """
-    pass
+    def test_sq_distance(self) :
+        """
+        Test square distance calculation without periodic boundary conditions.
+        """
+        # format is (point A, point B, expected square distance)
+        reference = (
+                ((0, 0, 0), (0, 0, 0), 0),
+                ((1, 1, 1), (1, 1, 1), 0),
+                ((0, 0, 0), (1, 0, 0), 1),  # Check X axis
+                ((0, 0, 0), (0, 1, 0), 1),  # Check Y axis
+                ((0, 0, 0), (0, 0, 1), 1),  # Check Z axis
+                # Check a more realistic cases
+                ((0.978, 4.892, 3.889), (2.261, 4.973, 2.441), 3.7493),  
+                ((-0.044, 3.691, 2.737), (0.227, 4.160, 2.714), 0.2939),
+        )
+        for point_a, point_b, ref_value in reference :
+            value = grw.sq_distance(point_a, point_b)
+            self.assertAlmostEqual(value, ref_value, PRECISION,
+                ("Square distance between {0} and {1} do not match "
+                 "expectations with {2} places: {3} instead of {4}.").format(
+                         point_a, point_b, PRECISION, value, ref_value))
 
 
 class TestProgramm(TestCase) :
