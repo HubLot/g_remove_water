@@ -69,7 +69,7 @@ def isfile(path):
     return path
 
 
-def define_options():
+def define_options(argv):
     """Define the script options."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-f", action="store", type=isfile, dest="filin",
@@ -98,7 +98,7 @@ def define_options():
                               "of this radius centered on a given set of "
                               "residue names. You need the --sphere option to "
                               "be set."))
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     # --sphere and --radius have to be used together, let's check this
     if ((args.sphere is None and not args.radius is None) or
             (args.radius is None and not args.sphere is None)):
@@ -303,7 +303,7 @@ def renumber(lines, start_res=None):
 if __name__ == '__main__':
 
     #Command line parsing
-    args = define_options()
+    args = define_options(sys.argv)
 
     filin = args.filin
     filout = args.filout

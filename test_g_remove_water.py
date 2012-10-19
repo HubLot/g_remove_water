@@ -25,6 +25,8 @@ from __future__ import division
 from __future__ import with_statement
 from unittest import TestCase, main
 import os
+import sys
+import copy
 import g_remove_water as grw
 
 __author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
@@ -115,12 +117,12 @@ class TestSlice(TestCase):
         z_low, z_top = grw.z_mean_values(lines, "P1")
         self.assertAlmostEqual(reference[0], z_low, PRECISION,
                                ("Z mean value for the lower leaflet do not "
-                                "match with {0} places: {1} instead of {2}"
-                                ).format(PRECISION, reference[0], z_low))
+                                "match with {0} places: {1} instead of {2}")
+                               .format(PRECISION, reference[0], z_low))
         self.assertAlmostEqual(reference[1], z_top, PRECISION,
                                ("Z mean value for the upper leaflet do not "
-                                "match with {0} places: {1} instead of {2}"
-                                ).format(PRECISION, reference[1], z_top))
+                                "match with {0} places: {1} instead of {2}")
+                               .format(PRECISION, reference[1], z_top))
 
 
 class TestSphere(TestCase):
@@ -162,8 +164,41 @@ class TestSphere(TestCase):
         for ref, value in zip(reference, center):
             self.assertAlmostEqual(ref, value, PRECISION,
                                    ("Geometric center is wrong: "
-                                    "{0} instead of {1}").format(
-                                        center, reference))
+                                    "{0} instead of {1}")
+                                   .format(center, reference))
+
+    def test_define_options_sphere_radius_type(self):
+        """
+        Test if --sphere and --radius options return the right types.
+        """
+        sphere_ref = ["ARG", "LEU", "GLY"]
+        argv = ["-f", "{0}/regular.gro".format(REFDIR), "--sphere"] + \
+            sphere_ref + ["--radius", "6.4"]
+        args = grw.define_options(argv)
+        self.assertEqual(args.sphere, sphere_ref,
+                         "Option --sphere get {0} instead of {1}.".format(
+                             args.sphere, sphere_ref))
+        self.assertAlmostEqual(args.radius, 6.4, PRECISION,
+                               "Option --radius get {0} instead of {1}."
+                                   .format(args.radius, 6.4))
+
+    def test_define_options_radius_non_nul(self):
+        """
+        Test if define_options complains about nul --radius.
+        """
+        argv = ["-f", "{0}/regular.gro".format(REFDIR),
+                "--sphere", "ARG", "--radius", "0.0"]
+        self.assertRaises(Exception, grw.define_options, *[argv])
+
+    def test_define_options_sphere_radius_missing(self):
+        """
+        Test if define_options complains about --sphere or --radius missing.
+        """
+        # Argparse writes in stderr and that screw nosetests output capture
+        argv = ["-f", "{0}/regular.gro".format(REFDIR), "--sphere", "ARG"]
+        self.assertRaises(SystemExit, grw.define_options, *[argv])
+        argv = ["-f", "{0}/regular.gro".format(REFDIR), "--radius", "4.2"]
+        self.assertRaises(SystemExit, grw.define_options, *[argv])
 
 
 class TestProgramm(TestCase):
@@ -232,7 +267,6 @@ def _test_renumber(lines, topology, start_res):
         resid = int(line[0:5])
         atomid = int(line[15:20])
         ref_atomid = line_number + 1
-        print line[:-1]
         # Check the residue
         assert resid == ref_resid, \
             ("Resisue ID is wrong after renumbering: "
