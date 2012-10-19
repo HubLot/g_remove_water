@@ -26,7 +26,7 @@ from __future__ import with_statement
 from unittest import TestCase, main
 import os
 import sys
-import copy
+import contextlib
 import g_remove_water as grw
 
 __author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
@@ -195,10 +195,11 @@ class TestSphere(TestCase):
         Test if define_options complains about --sphere or --radius missing.
         """
         # Argparse writes in stderr and that screw nosetests output capture
-        argv = ["-f", "{0}/regular.gro".format(REFDIR), "--sphere", "ARG"]
-        self.assertRaises(SystemExit, grw.define_options, *[argv])
-        argv = ["-f", "{0}/regular.gro".format(REFDIR), "--radius", "4.2"]
-        self.assertRaises(SystemExit, grw.define_options, *[argv])
+        with _redirect_stderr() :
+            argv = ["-f", "{0}/regular.gro".format(REFDIR), "--sphere", "ARG"]
+            self.assertRaises(SystemExit, grw.define_options, *[argv])
+            argv = ["-f", "{0}/regular.gro".format(REFDIR), "--radius", "4.2"]
+            self.assertRaises(SystemExit, grw.define_options, *[argv])
 
 
 class TestProgramm(TestCase):
@@ -206,6 +207,17 @@ class TestProgramm(TestCase):
     Test the program command line.
     """
     pass
+
+
+@contextlib.contextmanager
+def _redirect_stderr(destination=sys.stdout):
+    """
+    Redirect sys.stderr to an other file descriptor (sys.stdout by default).
+    """
+    old_stderr = sys.stderr
+    sys.stderr = destination
+    yield
+    sys.stderr = old_stderr
 
 
 def residue_numbers(topology, start_res=1):
