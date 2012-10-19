@@ -234,12 +234,12 @@ def _test_renumber(lines, topology, start_res):
         ref_atomid = line_number + 1
         print line[:-1]
         # Check the residue
-        assert resid == ref_resid,\
+        assert resid == ref_resid, \
             ("Resisue ID is wrong after renumbering: "
              "{0} instead of {1} at line {2}").format(
                  resid, ref_resid, line_number + 3)
         # Check the atom
-        assert atomid == ref_atomid,\
+        assert atomid == ref_atomid, \
             ("Atom ID is wrong after renumbering: "
              "{0} instead of {1} at line {2}").format(
                  atomid, ref_atomid, line_number + 3)
