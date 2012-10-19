@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-#    This program is free software: you can redistribute it and/or modify  
-#    it under the terms of the GNU General Public License as published by   
-#    the Free Software Foundation, either version 3 of the License, or      
-#    (at your option) any later version.                                    
-#                                                                           
-#    This program is distributed in the hope that it will be useful,        
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of         
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          
-#    GNU General Public License for more details.                           
-#                                                                           
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
 #    A copy of the GNU General Public License is available at
 #    http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -38,11 +38,11 @@ REFDIR = "test_ressources"
 PRECISION = 4
 
 
-class TestGeneral(TestCase) :
+class TestGeneral(TestCase):
     """
     Test genral infrastructure that is shared with every modes.
     """
-    def test_find_ref_atom_regular(self) :
+    def test_find_ref_atom_regular(self):
         """
         Test find_ref_atom function in the regular case where the reference
         atom is present or absent from the file body.
@@ -51,15 +51,15 @@ class TestGeneral(TestCase) :
         lines = open(path).readlines()
         # P1 is present in the file
         self.assertTrue(grw.find_ref_atom(lines, "P1"),
-                "P1 should be find in {0} body.".format(path))
+                        "P1 should be find in {0} body.".format(path))
         # ABS is absent from the file
         self.assertFalse(grw.find_ref_atom(lines, "ABS"),
-                "ABS should not be find in {0} body.".format(path))
+                         "ABS should not be find in {0} body.".format(path))
         # AA is present at the right place in the header but should be ignored
         self.assertFalse(grw.find_ref_atom(lines, "AA"),
-                "AA should be ignored in {0} head.".format(path))
+                         "AA should be ignored in {0} head.".format(path))
 
-    def test_renumber_noarg(self) :
+    def test_renumber_noarg(self):
         """
         Test the atom renumbering with the renumber function without the
         start_res argument.
@@ -67,14 +67,14 @@ class TestGeneral(TestCase) :
         path = os.path.join(REFDIR, "regular.gro")
         removed_res = (10, 50, 60)
         # Remove some residues and renumber atoms and residues
-        with open(path) as infile :
+        with open(path) as infile:
             renumbered = _create_runumbered(infile, removed_res)
         # Check numbering
         # (number of atom per residue, number of residue)
         topology = ((52, 72 - len(removed_res)), (3, 3739))
         _test_renumber(renumbered, topology, 1)
 
-    def test_renumber_start_res(self) :
+    def test_renumber_start_res(self):
         """
         Test the atom renumbering with the renumber function with the
         start_res argument. This is testing both the start-res argument and the
@@ -84,7 +84,7 @@ class TestGeneral(TestCase) :
         removed_res = (10, 50, 60)
         start_res = 98999
         # Remove some residues and renumber atoms and residues
-        with open(path) as infile :
+        with open(path) as infile:
             renumbered = _create_runumbered(infile, removed_res, start_res)
         # Check numbering
         # (number of atom per residue, number of residue)
@@ -92,11 +92,11 @@ class TestGeneral(TestCase) :
         _test_renumber(renumbered, topology, start_res)
 
 
-class TestSlice(TestCase) :
+class TestSlice(TestCase):
     """
     Test slice mode specific functions.
     """
-    def test_z_mean_values(self) :
+    def test_z_mean_values(self):
         """
         Test the mean Z values returned for each leaflet by z_mean_values.
 
@@ -109,47 +109,48 @@ class TestSlice(TestCase) :
         reference = (2.14186, 5.71483)
         # For the record, values for X are (2.23333, 2.5495), values for Y are
         # (2.688, 2.50058)
-        
+
         path = os.path.join(REFDIR, "regular.gro")
         lines = open(path).readlines()
         z_low, z_top = grw.z_mean_values(lines, "P1")
         self.assertAlmostEqual(reference[0], z_low, PRECISION,
-                ("Z mean value for the lower leaflet do not match with "
-                 "{0} places: {1} instead of {2}").format(
-                     PRECISION, reference[0], z_low))
+                               ("Z mean value for the lower leaflet do not "
+                                "match with {0} places: {1} instead of {2}"
+                                ).format(PRECISION, reference[0], z_low))
         self.assertAlmostEqual(reference[1], z_top, PRECISION,
-                ("Z mean value for the upper leaflet do not match with "
-                 "{0} places: {1} instead of {2}").format(
-                     PRECISION, reference[1], z_top))
+                               ("Z mean value for the upper leaflet do not "
+                                "match with {0} places: {1} instead of {2}"
+                                ).format(PRECISION, reference[1], z_top))
 
 
-class TestSphere(TestCase) :
+class TestSphere(TestCase):
     """
     Test sphere mode specific functions.
     """
-    def test_sq_distance(self) :
+    def test_sq_distance(self):
         """
         Test square distance calculation without periodic boundary conditions.
         """
         # format is (point A, point B, expected square distance)
         reference = (
-                ((0, 0, 0), (0, 0, 0), 0),
-                ((1, 1, 1), (1, 1, 1), 0),
-                ((0, 0, 0), (1, 0, 0), 1),  # Check X axis
-                ((0, 0, 0), (0, 1, 0), 1),  # Check Y axis
-                ((0, 0, 0), (0, 0, 1), 1),  # Check Z axis
-                # Check a more realistic cases
-                ((0.978, 4.892, 3.889), (2.261, 4.973, 2.441), 3.749354),  
-                ((-0.044, 3.691, 2.737), (0.227, 4.160, 2.714), 0.2939),
+                    ((0, 0, 0), (0, 0, 0), 0),
+                    ((1, 1, 1), (1, 1, 1), 0),
+                    ((0, 0, 0), (1, 0, 0), 1),  # Check X axis
+                    ((0, 0, 0), (0, 1, 0), 1),  # Check Y axis
+                    ((0, 0, 0), (0, 0, 1), 1),  # Check Z axis
+                    ((0.978, 4.892, 3.889), (2.261, 4.973, 2.441), 3.749354),
+                    ((-0.044, 3.691, 2.737), (0.227, 4.160, 2.714), 0.2939),
         )
-        for point_a, point_b, ref_value in reference :
+        for point_a, point_b, ref_value in reference:
             value = grw.sq_distance(point_a, point_b)
             self.assertAlmostEqual(value, ref_value, PRECISION,
-                ("Square distance between {0} and {1} do not match "
-                 "expectations with {2} places: {3} instead of {4}.").format(
-                         point_a, point_b, PRECISION, value, ref_value))
+                                   ("Square distance between {0} and {1} do "
+                                    "not match expectations with {2} places: "
+                                    "{3} instead of {4}.").format(
+                                        point_a, point_b, PRECISION,
+                                        value, ref_value))
 
-    def test_geometric_center(self) :
+    def test_geometric_center(self):
         """
         Test the geometric center calculation.
         """
@@ -158,20 +159,21 @@ class TestSphere(TestCase) :
         path = os.path.join(REFDIR, "center.gro")
         lines = open(path).readlines()
         center = grw.geometric_center(lines, resnames)
-        for ref, value in zip(reference, center) :
+        for ref, value in zip(reference, center):
             self.assertAlmostEqual(ref, value, PRECISION,
-                    "Geometric center is wrong: {0} instead of {1}".format(
-                        center, reference))
+                                   ("Geometric center is wrong: "
+                                    "{0} instead of {1}").format(
+                                        center, reference))
 
 
-class TestProgramm(TestCase) :
+class TestProgramm(TestCase):
     """
     Test the program command line.
     """
     pass
 
 
-def residue_numbers(topology, start_res=1) :
+def residue_numbers(topology, start_res=1):
     """
     Generate residue numbers according to a topology.
 
@@ -185,15 +187,16 @@ def residue_numbers(topology, start_res=1) :
         - start_res: the number of the first residue
     """
     resid = start_res - 1
-    for natoms, nresidues in topology :
-        for residue in xrange(nresidues) :
+    for natoms, nresidues in topology:
+        for residue in xrange(nresidues):
             resid += 1
-            if resid > 99999 :
+            if resid > 99999:
                 resid = 1
-            for atoms in xrange(natoms) :
+            for atoms in xrange(natoms):
                 yield resid
 
-def _create_runumbered(infile, removed_res, start_res=None) :
+
+def _create_runumbered(infile, removed_res, start_res=None):
     """
     Remove residues from a structure and renumber the atoms and residues.
 
@@ -208,12 +211,13 @@ def _create_runumbered(infile, removed_res, start_res=None) :
     lines = infile.readlines()
     # Remove some residues
     keep = lines[:2] + [line for line in lines[2:-1]
-            if not int(line[0:5]) in removed_res] + [line[-1]]
+                        if not int(line[0:5]) in removed_res] + [line[-1]]
     # Renumber residues and atoms
     renumbered = grw.renumber(keep, start_res)
     return renumbered
 
-def _test_renumber(lines, topology, start_res) :
+
+def _test_renumber(lines, topology, start_res):
     """
     Test atom renumbering in various conditions.
 
@@ -224,21 +228,21 @@ def _test_renumber(lines, topology, start_res) :
     """
     for line_number, (ref_resid, line) \
             in enumerate(zip(residue_numbers(topology, start_res),
-                lines[2:-1])) :
+                             lines[2:-1])):
         resid = int(line[0:5])
         atomid = int(line[15:20])
         ref_atomid = line_number + 1
         print line[:-1]
         # Check the residue
         assert resid == ref_resid,\
-                ("Resisue ID is wrong after renumbering: "
-                "{0} instead of {1} at line {2}").format(
-                    resid, ref_resid, line_number + 3)
+            ("Resisue ID is wrong after renumbering: "
+             "{0} instead of {1} at line {2}").format(
+                 resid, ref_resid, line_number + 3)
         # Check the atom
         assert atomid == ref_atomid,\
-                ("Atom ID is wrong after renumbering: "
-                "{0} instead of {1} at line {2}").format(
-                    atomid, ref_atomid, line_number + 3)
+            ("Atom ID is wrong after renumbering: "
+             "{0} instead of {1} at line {2}").format(
+                 atomid, ref_atomid, line_number + 3)
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     main()
