@@ -194,8 +194,10 @@ class TestSphere(TestCase):
         """
         Test if define_options complains about --sphere or --radius missing.
         """
-        # Argparse writes in stderr and that screw nosetests output capture
-        with _redirect_stderr() :
+        # Argparse writes in stderr and that screw nosetests output capture.
+        # Let's redirect stderr to stdout so argparse output can be
+        # captured by nosetests.
+        with _redirect_stderr(sys.stdout) :
             argv = ["-f", "{0}/regular.gro".format(REFDIR), "--sphere", "ARG"]
             self.assertRaises(SystemExit, grw.define_options, *[argv])
             argv = ["-f", "{0}/regular.gro".format(REFDIR), "--radius", "4.2"]
@@ -213,6 +215,21 @@ class TestProgramm(TestCase):
 def _redirect_stderr(destination=sys.stdout):
     """
     Redirect sys.stderr to an other file descriptor (sys.stdout by default).
+
+    This function is a context manager and is used like as followed::
+    
+        >>> with _redirect_stderr():
+        ...     print >> sys.stderr, "Something"
+
+    In this exemple the print is done in sys.stdout even if sys.stderr is
+    explicitely mentionned.
+
+    Stderr can also be redirected to a file descriptor::
+
+        >>> with open("my_file", "wt") as outfile:
+        ...     with _redirect_stderr(outfile):
+        ...         print >> sys.stderr, "Something"
+    
     """
     old_stderr = sys.stderr
     sys.stderr = destination
