@@ -197,7 +197,7 @@ class TestSphere(TestCase):
         # Argparse writes in stderr and that screw nosetests output capture.
         # Let's redirect stderr to stdout so argparse output can be
         # captured by nosetests.
-        with _redirect_stderr(sys.stdout) :
+        with _redirect_stderr(sys.stdout):
             argv = ["-f", "{0}/regular.gro".format(REFDIR), "--sphere", "ARG"]
             self.assertRaises(SystemExit, grw.define_options, *[argv])
             argv = ["-f", "{0}/regular.gro".format(REFDIR), "--radius", "4.2"]
@@ -217,7 +217,7 @@ def _redirect_stderr(destination=sys.stdout):
     Redirect sys.stderr to an other file descriptor (sys.stdout by default).
 
     This function is a context manager and is used like as followed::
-    
+
         >>> with _redirect_stderr():
         ...     print >> sys.stderr, "Something"
 
@@ -229,7 +229,7 @@ def _redirect_stderr(destination=sys.stdout):
         >>> with open("my_file", "wt") as outfile:
         ...     with _redirect_stderr(outfile):
         ...         print >> sys.stderr, "Something"
-    
+
     """
     old_stderr = sys.stderr
     sys.stderr = destination
