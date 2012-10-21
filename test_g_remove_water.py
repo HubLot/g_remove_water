@@ -155,6 +155,9 @@ class TestSphere(TestCase):
     def test_geometric_center(self):
         """
         Test the geometric center calculation.
+
+        Reference coordinates were calculated with g_traj. The output of the
+        program is available in test_ressources/center.xvg.
         """
         reference = (0.000216667, 0.00045, 5.00003e-05)
         resnames = ["C60"]
