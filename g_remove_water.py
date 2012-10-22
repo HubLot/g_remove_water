@@ -54,6 +54,16 @@ import os
 import argparse
 
 # Index of the coordinate slices in gro file atom line
+# The gro format is described at http://manual.gromacs.org/online/gro.html
+# Columns are organized as :
+# * residue number (5 positions, integer)
+# * residue name (5 characters)
+# * atom name (5 characters)
+# * atom number (5 positions, integer)
+# * position (in nm, x y z in 3 columns, each 8 positions with 3 decimal
+#   places)
+# * velocity (in nm/ps (or km/s), x y z in 3 columns, each 8 positions with
+#   4 decimal places)
 COORDINATE_INDEX = ((20, 28), (28, 36), (36, 44))
 
 
@@ -188,7 +198,7 @@ def geometric_center(lines, resnames):
     natoms = 0
     # Sum up the coordinates of the atoms of interest
     for line in lines[2:-1]:
-        resname = line[5:10].strip()  # TODO check the end index
+        resname = line[5:10].strip()
         if resname in resnames:
             for index, (begin, end) in enumerate(COORDINATE_INDEX):
                 iso_coords[index] += float(line[begin:end])
@@ -223,7 +233,7 @@ def remove_sphere(lines, resnames, center, radius):
     # we already included and inhibit the inclusion of the following ones.
     inhibit_resid = None
     for line in lines[2:-1]:
-        resname = line[5:10].strip()  # TODO check the end index
+        resname = line[5:10].strip()
         resid = int(line[0:5])
         coords = [float(line[begin:end]) for begin, end in COORDINATE_INDEX]
         if (resname in resnames
