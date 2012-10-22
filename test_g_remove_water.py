@@ -33,7 +33,7 @@ __author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
 __version__ = "1.0"
 
 # Path to the directory containing the material for tests
-REFDIR = "test_ressources"
+REFDIR = "test_resources"
 
 # Gro files usually store coordinates with decimals. Let's be precise
 # until the fourth one.
@@ -42,7 +42,7 @@ PRECISION = 4
 
 class TestGeneral(TestCase):
     """
-    Test genral infrastructure that is shared with every modes.
+    Test general infrastructure that is shared with every modes.
     """
     def test_find_ref_atom_regular(self):
         """
@@ -157,7 +157,7 @@ class TestSphere(TestCase):
         Test the geometric center calculation.
 
         Reference coordinates were calculated with g_traj. The output of the
-        program is available in test_ressources/center.xvg.
+        program is available in test_resources/center.xvg.
         """
         reference = (0.000216667, 0.00045, 5.00003e-05)
         resnames = ["C60"]
@@ -224,8 +224,8 @@ def _redirect_stderr(destination=sys.stdout):
         >>> with _redirect_stderr():
         ...     print >> sys.stderr, "Something"
 
-    In this exemple the print is done in sys.stdout even if sys.stderr is
-    explicitely mentionned.
+    In this example the print is done in sys.stdout even if sys.stderr is
+    explicitly mentioned.
 
     Stderr can also be redirected to a file descriptor::
 
@@ -301,7 +301,7 @@ def _test_renumber(lines, topology, start_res):
         ref_atomid = line_number + 1
         # Check the residue
         assert resid == ref_resid, \
-            ("Resisue ID is wrong after renumbering: "
+            ("Residue ID is wrong after renumbering: "
              "{0} instead of {1} at line {2}").format(
                  resid, ref_resid, line_number + 3)
         # Check the atom
