@@ -48,7 +48,7 @@ run them by simply execute test_g_remove_water.py::
 
     python test_g_remove_water.py
 
-The `nosetests python module <https://nose.readthedocs.org>_` allows a smarter
+The `nosetests python module <https://nose.readthedocs.org>`_ allows a smarter
 display of the report by displaying test function outputs only when the test
 fail. If you have nosetests installed you can run the test by typing::
 
