@@ -313,7 +313,7 @@ def renumber(lines, start_res=None):
 if __name__ == '__main__':
 
     #Command line parsing
-    args = define_options(sys.argv)
+    args = define_options(sys.argv[1:])
 
     filin = args.filin
     filout = args.filout
