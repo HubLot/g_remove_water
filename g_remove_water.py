@@ -21,7 +21,7 @@ Takes a gro file containing a bilayer and remove any water molecules inside the
 bilayer.
 
 To remove molecules, it's based on Z mean of the upper and lower leaflet.
-At the end, the residus and the atoms are re-numbered and the number of atoms
+At the end, the residues and the atoms are re-numbered and the number of atoms
 at the 2nd line is updated.
 
 Title and box vectors are kept.
@@ -153,7 +153,7 @@ def z_mean_values(lines, atm_ref):
 def remove_water(lines, z_upper, z_lower, atom_water):
     """Return  a list containing all lines of the gro file to keep"""
     reslines = []  # Lines which will be write in the output file
-    #Appends the first 2 lines (ie Title and Number of atoms)
+    #Appends the first 2 lines (i.e. Title and Number of atoms)
     reslines.append(lines[0].strip())
     reslines.append(lines[1].strip())
 
@@ -239,7 +239,7 @@ def remove_sphere(lines, resnames, center, radius):
         if (resname in resnames
                 and ((not inhibit_resid is None and resid == inhibit_resid)
                      or sq_distance(center, coords) <= sq_radius)):
-            # The atome is inside the sphere
+            # The atom is inside the sphere
             # Remove previously added atoms from the residue
             while int(reslines[-1][0:5]) == resid:
                 del reslines[-1]
@@ -257,7 +257,7 @@ def remove_sphere(lines, resnames, center, radius):
 
 
 def find_ref_atom(lines, ref_atom):
-    """Return a boolean wether the "atom" was find in the file"""
+    """Return a boolean whether the "atom" was find in the file"""
 
     for i in lines:
         atom_name = i[10:15].strip()
@@ -267,7 +267,7 @@ def find_ref_atom(lines, ref_atom):
 
 
 def renumber(lines, start_res=None):
-    """Renum the atoms and the residus in a file"""
+    """Renum the atoms and the residues in a file"""
 
     out = []
     #Appends the first 2 lines (ie Title and Number of atoms)
@@ -301,7 +301,7 @@ def renumber(lines, start_res=None):
         else:
             output_atom += 1
 
-        #Append the line with the correct number of residu and atom
+        #Append the line with the correct number of residues and atoms
         out.append("%5i%s%5i%s" % (output_res, i[5:15], output_atom, i[20:]))
 
     #Save the last line (box vectors)
