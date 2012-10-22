@@ -1,0 +1,22 @@
+# This file was created Thu Oct 18 16:43:32 2012
+# by the following command:
+# g_traj -f center.gro -s center.gro -ox center -com 
+#
+# g_traj is part of G R O M A C S:
+#
+# GROtesk MACabre and Sinister
+#
+@    title "Center of mass"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "Coordinate (nm)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "C60 X"
+@ s1 legend "C60 Y"
+@ s2 legend "C60 Z"
+ 0	0.000216667	0.00045	5.00003e-05
