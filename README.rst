@@ -6,7 +6,7 @@ molecules inside the bilayer.
 
 To remove molecules, it's based on Z mean of the upper and lower leaflet.
 
-At the end, the residus and the atoms are re-numbered and the number of atoms at the 2nd line is updated.
+At the end, the residues and the atoms are re-numbered and the number of atoms at the 2nd line is updated.
 Title and box vectors are kept.
 
 The atom to determine the upper and lower leaflet (typically the phosphate) can be set with the lipid_atom option (default = P1)
@@ -40,6 +40,19 @@ optional arguments:
                                    radius centered on a given set of residue names. You
                                    need the --sphere option to be set.
 
+Run tests
+---------
+
+Unit tests are available for g_remove_water in test_g_remove_water.py. You can
+run them by simply execute test_g_remove_water.py::
+
+    python test_g_remove_water.py
+
+The `nosetests python module <https://nose.readthedocs.org>_` allows a smarter
+display of the report by displaying test function outputs only when the test
+fail. If you have nosetests installed you can run the test by typing::
+
+    nostests test_g_remove_water.py
 
 Licence
 -------
