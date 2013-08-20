@@ -39,6 +39,7 @@ Water molecules can also be removed if they are in a sphere centered on the
 geometrical center of the atom with a given set of residue name. Use --sphere
 to set the list of residue names to use for the center calculation and --radius
 to set the radius of the sphere.
+Water molecules removed are found based on their residue name (--water_residue).
 """
 
 # This import makes that all divisions are real division even if the two
@@ -97,6 +98,10 @@ def define_options(argv):
                         dest="water_atom", metavar="OW", default="OW",
                         help=("The reference atom for the water. "
                               "Use the oxygen. (OW by default)"))
+    parser.add_argument("--water_residue", action="store", type=str,
+                        dest="water_residue", metavar="SOL", default="SOL",
+                        help=("The reference residue name for the water. "
+                              "(SOL by default)"))
     parser.add_argument("--sphere", type=str, nargs='+', default=None,
                         metavar="RESNAME",
                         help=("Remove water molecules if they are in a sphere "
@@ -105,7 +110,7 @@ def define_options(argv):
                               "--radius option to be filled."))
     parser.add_argument("--radius", type=float, default=None,
                         help=("Remove water molecules if they are in a sphere "
-                              "of this radius centered on a given set of "
+                              "of this radius (in nm) centered on a given set of "
                               "residue names. You need the --sphere option to "
                               "be set."))
     args = parser.parse_args(argv)
@@ -265,6 +270,15 @@ def find_ref_atom(lines, ref_atom):
             return True
     return False
 
+def find_ref_residue(lines, ref_residue):
+    """Return a boolean whether the "residue" was find in the file"""
+
+    for i in lines:
+        residue_name = i[5:10].strip()
+        if ref_residue == residue_name:
+            return True
+    return False
+
 
 def renumber(lines, start_res=None):
     """Renum the atoms and the residues in a file"""
@@ -320,6 +334,7 @@ if __name__ == '__main__':
     lipid_atom = args.lipid_atom
     water_atom = args.water_atom
 
+
     print "The input coordinate file is {0}".format(filin)
     print "The output file will be {0}".format(filout)
     print "The reference atom for the lipid bilayer is {0}".format(lipid_atom)
@@ -350,11 +365,25 @@ if __name__ == '__main__':
                                                  water_atom)
         print "Done!"
     else:
+        print "The reference residue for the sphere is {0}".format(", ".join(args.sphere))
+        print "The reference residue for the water is {0}".format(args.water_residue)
+        if not find_ref_residue(data, args.water_residue):
+            print "Oops!"
+            print ("The reference residue {0} for water  was not find. "
+                   "Exiting...").format(args.water_residue)
+            sys.exit()
+        for res in args.sphere:
+            if not find_ref_residue(data, res):
+                print "Oops!"
+                print ("The reference residue {0} for the sphere  was not find. "
+                       "Exiting...").format(res)
+                sys.exit()
+
         print "Get the center of the sphere...",
         center = geometric_center(data, args.sphere)
         print "Done! The center is {0}".format(center)
-        print "Remove water molecules inside the sphere..."
-        temp_lines = remove_sphere(data, [water_atom], center, args.radius)
+        print "Remove water molecules inside the sphere...",
+        temp_lines = remove_sphere(data, args.water_residue, center, args.radius)
         water_removed = len(data) - len(temp_lines)
         print "Done!"
 
