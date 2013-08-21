@@ -226,6 +226,9 @@ def remove_sphere(lines, resnames, center, radius):
     Remove residue when at least one of its atoms is inside the given sphere.
     Return a list of all the gro file lines to keep.
     """
+
+    prev_resid = -1
+    nb_res_water = 0
     # We want to include the two first lines anyway
     reslines = []
     reslines.append(lines[0][:-1])
@@ -244,12 +247,18 @@ def remove_sphere(lines, resnames, center, radius):
         if (resname in resnames
                 and ((not inhibit_resid is None and resid == inhibit_resid)
                      or sq_distance(center, coords) <= sq_radius)):
+            #Update the number of water molecules removed
+            if (prev_resid != resid): #To avoid adding H
+                nb_res_water += 1
             # The atom is inside the sphere
             # Remove previously added atoms from the residue
             while int(reslines[-1][0:5]) == resid:
                 del reslines[-1]
             # Set the inhibition
             inhibit_resid = resid
+
+            #Update the prev_resid
+            prev_resid = resid
         else:
             reslines.append(line[:-1])
             inhibit_resid = None
@@ -258,7 +267,8 @@ def remove_sphere(lines, resnames, center, radius):
     reslines.append(lines[-1][:-1])
     # Update the number of atoms
     reslines[1] = str(len(reslines) - 3)
-    return reslines
+
+    return reslines, nb_res_water
 
 
 def find_ref_atom(lines, ref_atom):
@@ -345,8 +355,6 @@ if __name__ == '__main__':
     f.close()
 
     if args.sphere is None:
-        print "The reference atom for the lipid bilayer is {0}".format(
-              lipid_atom)
         print
         print "Checking the reference atom...",
         if not find_ref_atom(data, lipid_atom):
@@ -354,6 +362,11 @@ if __name__ == '__main__':
             print ("The reference atom {0} for the bilayer was not find. "
                    "Exiting...").format(lipid_atom)
             sys.exit()
+        if not find_ref_atom(data, water_atom):
+            print "Oops!"
+            print ("The reference atom {0} for the water was not find. "
+                   "Exiting...").format(water_atom)
+        sys.exit()
         print "Done!"
 
         #Get Z mean for  the upper and lower leaflet
@@ -383,8 +396,7 @@ if __name__ == '__main__':
         center = geometric_center(data, args.sphere)
         print "Done! The center is {0}".format(center)
         print "Remove water molecules inside the sphere...",
-        temp_lines = remove_sphere(data, args.water_residue, center, args.radius)
-        water_removed = len(data) - len(temp_lines)
+        temp_lines, water_removed = remove_sphere(data, args.water_residue, center, args.radius)
         print "Done!"
 
     first_res_number = int(data[2][0:5])
