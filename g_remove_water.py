@@ -366,8 +366,8 @@ if __name__ == '__main__':
             print "Oops!"
             print ("The reference atom {0} for the water was not find. "
                    "Exiting...").format(water_atom)
-        sys.exit()
-        print "Done!"
+            sys.exit()
+            print "Done!"
 
         #Get Z mean for  the upper and lower leaflet
         z_lower, z_upper = z_mean_values(data, lipid_atom)
