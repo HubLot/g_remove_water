@@ -192,26 +192,43 @@ def remove_water(lines, z_upper, z_lower, atom_water):
     return reslines, nb_res_water
 
 
-def geometric_center(lines, resnames):
+def geometric_center(lines, resids):
     """
-    Get the isobarycenter of the atoms having the given residue name.
+    Get the isobarycenter of the atoms having the given residue id.
 
-    The "resname" argument is a list od residue names. An atom is taken into
-    account if its residue name is in the list.
+    The "resids" argument is a list of tuple containing the residue id and
+    the numbero of atoms. 
+    An atom is taken into account if its residue name is in the list.
     """
-    iso_coords = [0] * 3
+
+    #Get only the resids
+    list_resids = [i for i,j in resids]
+    #Init the dic
+    dic_coords = {}
+    for resid in list_resids:
+        dic_coords[resid] = [0] * 3
+
     natoms = 0
+    prev_resid = int(lines[3][0:5])
+
     # Sum up the coordinates of the atoms of interest
     for line in lines[2:-1]:
-        resname = line[5:10].strip()
-        if resname in resnames:
+        resid = int(line[0:5])
+
+        if resid in list_resids:
             for index, (begin, end) in enumerate(COORDINATE_INDEX):
-                iso_coords[index] += float(line[begin:end])
+                dic_coords[resid][index] += float(line[begin:end])
             natoms += 1
+
+        if resid != prev_resid:
+            prev_resid += 1
+
     # Do the averaging
-    for i in xrange(3):
-        iso_coords[i] /= natoms
-    return iso_coords
+    for resid,nb_atoms in resids:
+        for i in xrange(3):
+            dic_coords[resid][i] /= nb_atoms
+
+    return dic_coords
 
 
 def sq_distance(point_a, point_b):
@@ -260,11 +277,12 @@ def remove_sphere(lines, resnames, center, radius):
             #Update the prev_resid
             prev_resid = resid
         else:
-            reslines.append(line[:-1])
+            reslines.append(line)
             inhibit_resid = None
 
     # We want to keep the box definition
-    reslines.append(lines[-1][:-1])
+    #reslines.append(lines[-1][:-1])
+    reslines.append(lines[-1])
     # Update the number of atoms
     reslines[1] = str(len(reslines) - 3)
 
@@ -289,6 +307,33 @@ def find_ref_residue(lines, ref_residue):
             return True
     return False
 
+def get_resids(lines, resnames):
+    """Return list of tuples containing the resid 
+    and the number of atomes from the resnames"""
+
+    res_ids = []
+    prev_resid = int(lines[3][0:5])
+    nb_atoms = 0
+
+    for line in lines[2:-1]:
+        resname = line[5:10].strip()
+        resid = int(line[0:5])
+
+        if resname in resnames:
+            if resid != prev_resid and nb_atoms != 0:
+                res_ids.append((prev_resid, nb_atoms))
+                nb_atoms = 1
+            else:
+                nb_atoms += 1
+
+        if resid != prev_resid:
+            prev_resid += 1
+
+    #If the molecule 'resnames' is the last one
+    if lines[-2][5:10].strip() in resnames:
+        res_ids.append((resid, nb_atoms))
+
+    return res_ids
 
 def renumber(lines, start_res=None):
     """Renum the atoms and the residues in a file"""
@@ -393,20 +438,25 @@ if __name__ == '__main__':
                 sys.exit()
 
         print "Get the center of the sphere...",
-        center = geometric_center(data, args.sphere)
-        print "Done! The center is {0}".format(center)
+        resids = get_resids(data, args.sphere)
+        print resids
+        dic_center = geometric_center(data, resids)
+        print "Done! The center is {0}".format(dic_center)
         print "Remove water molecules inside the sphere...",
-        temp_lines, water_removed = remove_sphere(data, args.water_residue, center, args.radius)
-        print "Done!"
-
-    first_res_number = int(data[2][0:5])
-    print "Renumber residues and atoms...",
-    output = renumber(temp_lines, first_res_number)
-    print "Done!"
+        output=data
+        wat = 0
+        for resid,center in dic_center.items():
+            temp_lines, water_removed = remove_sphere(output, args.water_residue, center, args.radius)
+            print "Done!"
+            wat += water_removed
+            first_res_number = int(data[2][0:5])
+            print "Renumber residues and atoms...",
+            output = renumber(temp_lines, first_res_number)
+            print "Done!"
 
     print
     print "The old system contained {0} atoms.".format(data[1].strip())
-    print "{0} water molecules have been removed.".format(water_removed)
+    print "{0} water molecules have been removed.".format(wat)
     print "The new system contains {0} atoms.".format(output[1])
 
     #Write in the output file
