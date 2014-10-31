@@ -399,6 +399,7 @@ if __name__ == '__main__':
     data = f.readlines()
     f.close()
 
+    wat = 0
     if args.sphere is None:
         print
         print "Checking the reference atom...",
@@ -419,8 +420,13 @@ if __name__ == '__main__':
 
         print "Removing water inside the bilayer...",
         #Remove water molecules inside the bilayer
-        temp_lines, water_removed = remove_water(data, z_upper, z_lower,
+        temp_lines, wat = remove_water(data, z_upper, z_lower,
                                                  water_atom)
+        print "Done!"
+
+        first_res_number = int(data[2][0:5])
+        print "Renumber residues and atoms...",
+        output = renumber(temp_lines, first_res_number)
         print "Done!"
     else:
         print "The reference residue for the sphere is {0}".format(", ".join(args.sphere))
@@ -444,7 +450,6 @@ if __name__ == '__main__':
         print "Done! The center is {0}".format(dic_center)
         print "Remove water molecules inside the sphere...",
         output=data
-        wat = 0
         for resid,center in dic_center.items():
             temp_lines, water_removed = remove_sphere(output, args.water_residue, center, args.radius)
             print "Done!"
