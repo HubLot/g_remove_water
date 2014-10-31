@@ -383,93 +383,115 @@ def renumber(lines, start_res=None):
     return out
 
 
-if __name__ == '__main__':
+def perform_bilayer_removing(data, ref_lipid_atom, ref_water_atom):
+    """ Remove the water molecules inside a bilayer"""
 
-    # Command line parsing
-    args = define_options(sys.argv[1:])
+    print
+    print("Checking the reference atom...", end='')
+    if not find_ref_atom(data, ref_lipid_atom):
+        print("Oops!")
+        print(("The reference atom {0} for the bilayer was not find. "
+               "Exiting...").format(ref_lipid_atom))
+        sys.exit()
+    if not find_ref_atom(data, ref_water_atom):
+        print("Oops!")
+        print(("The reference atom {0} for the water was not find. "
+               "Exiting...").format(ref_water_atom))
+        sys.exit()
+    print("Done!")
 
-    filin = args.filin
-    filout = args.filout
-    lipid_atom = args.lipid_atom
-    water_atom = args.water_atom
+    # Get Z mean for  the upper and lower leaflet
+    z_lower, z_upper = z_mean_values(data, ref_lipid_atom)
 
-    print("The input coordinate file is {0}".format(filin))
-    print("The output file will be {0}".format(filout))
-    print("The reference atom for the lipid bilayer is {0}".format(lipid_atom))
-    print("The reference atom for the water is {0}".format(water_atom))
+    print("Removing water inside the bilayer...", end='')
+    # Remove water molecules inside the bilayer
+    temp_lines, wat = remove_water(data, z_upper, z_lower, ref_water_atom)
+    print("Done!")
 
-    f = open(filin, 'r')
-    data = f.readlines()
-    f.close()
+    first_res_number = int(data[2][0:5])
+    print("Renumber residues and atoms...", end='')
+    output = renumber(temp_lines, first_res_number)
+    print("Done!")
 
+    return (output, wat)
+
+
+def perform_sphere_removing(data, sphere_residus, sphere_radius, ref_water_residue):
+    """
+    Remove the water molecules inside a sphere centered on the
+    geometrical center of the atom with a given set of residue name
+    """
+
+    print("The reference residue for the sphere is {0}".format(", ".join(sphere_residus)))
+    print("The reference residue for the water is {0}".format(ref_water_residue))
+
+    if not find_ref_residue(data, ref_water_residue):
+        print("Oops!")
+        print(("The reference residue {0} for water  was not find. "
+               "Exiting...").format(ref_water_residue))
+        sys.exit()
+
+    for residue in sphere_residus:
+        if not find_ref_residue(data, residue):
+            print("Oops!")
+            print(("The reference residue {0} for the sphere  was not find. "
+                   "Exiting...").format(residue))
+            sys.exit()
+
+    print("Get the center of the sphere...", end='')
+    resids = get_resids(data, sphere_residus)
+    print(resids)
+    dic_center = geometric_center(data, resids)
+    print("Done! The center is {0}".format(dic_center))
+    print("Remove water molecules inside the sphere...", end='')
+    output = data
     wat = 0
-    if args.sphere is None:
-        print
-        print("Checking the reference atom...", end='')
-        if not find_ref_atom(data, lipid_atom):
-            print("Oops!")
-            print(("The reference atom {0} for the bilayer was not find. "
-                   "Exiting...").format(lipid_atom))
-            sys.exit()
-        if not find_ref_atom(data, water_atom):
-            print("Oops!")
-            print(("The reference atom {0} for the water was not find. "
-                   "Exiting...").format(water_atom))
-            sys.exit()
-            print("Done!")
+    for resid, center in dic_center.items():
+        temp_lines, water_removed = remove_sphere(output, ref_water_residue,
+                                                  center, sphere_radius)
 
-        # Get Z mean for  the upper and lower leaflet
-        z_lower, z_upper = z_mean_values(data, lipid_atom)
-
-        print("Removing water inside the bilayer...", end='')
-        # Remove water molecules inside the bilayer
-        temp_lines, wat = remove_water(data, z_upper, z_lower, water_atom)
         print("Done!")
-
+        wat += water_removed
         first_res_number = int(data[2][0:5])
         print("Renumber residues and atoms...", end='')
         output = renumber(temp_lines, first_res_number)
         print("Done!")
+
+    return (output, wat)
+
+
+def main():
+    """Run everythin from the command line"""
+
+    # Command line parsing
+    args = define_options(sys.argv[1:])
+
+    print("The input coordinate file is {0}".format(args.filin))
+    print("The output file will be {0}".format(args.filout))
+    print("The reference atom for the lipid bilayer is {0}".format(args.lipid_atom))
+    print("The reference atom for the water is {0}".format(args.water_atom))
+
+    f = open(args.filin, 'r')
+    data = f.readlines()
+    f.close()
+
+    if args.sphere is None:
+        output, wat = perform_bilayer_removing(data, args.lipid_atom, args.water_atom)
     else:
-        print("The reference residue for the sphere is {0}".format(", ".join(args.sphere)))
-        print("The reference residue for the water is {0}".format(args.water_residue))
-        if not find_ref_residue(data, args.water_residue):
-            print("Oops!")
-            print(("The reference residue {0} for water  was not find. "
-                   "Exiting...").format(args.water_residue))
-            sys.exit()
-        for res in args.sphere:
-            if not find_ref_residue(data, res):
-                print("Oops!")
-                print(("The reference residue {0} for the sphere  was not find. "
-                       "Exiting...").format(res))
-                sys.exit()
+        output, wat = perform_sphere_removing(data, args.sphere, args.radius, args.water_residue)
 
-        print("Get the center of the sphere...", end='')
-        resids = get_resids(data, args.sphere)
-        print(resids)
-        dic_center = geometric_center(data, resids)
-        print("Done! The center is {0}".format(dic_center))
-        print("Remove water molecules inside the sphere...", end='')
-        output = data
-        for resid, center in dic_center.items():
-            temp_lines, water_removed = remove_sphere(output, args.water_residue,
-                                                      center, args.radius)
-
-            print("Done!")
-            wat += water_removed
-            first_res_number = int(data[2][0:5])
-            print("Renumber residues and atoms...", end='')
-            output = renumber(temp_lines, first_res_number)
-            print("Done!")
-
-    print
+    print()
     print("The old system contained {0} atoms.".format(data[1].strip()))
     print("{0} water molecules have been removed.".format(wat))
     print("The new system contains {0} atoms.".format(output[1]))
 
     # Write in the output file
-    f = open(filout, 'w')
+    f = open(args.filout, 'w')
     f.write('\n'.join(output))
     f.write("\n")
     f.close()
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
