@@ -278,7 +278,7 @@ def remove_sphere(lines, resnames, center, radius):
             # Update the prev_resid
             prev_resid = resid
         else:
-            reslines.append(line)
+            reslines.append(line[:-1])
             inhibit_resid = None
 
     # We want to keep the box definition
@@ -455,6 +455,7 @@ if __name__ == '__main__':
         for resid, center in dic_center.items():
             temp_lines, water_removed = remove_sphere(output, args.water_residue,
                                                       center, args.radius)
+
             print("Done!")
             wat += water_removed
             first_res_number = int(data[2][0:5])
