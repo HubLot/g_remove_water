@@ -68,6 +68,14 @@ import argparse
 COORDINATE_INDEX = ((20, 28), (28, 36), (36, 44))
 
 
+class RefObjectError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+
 def isfile(path):
     """Check if path is an existing file.
     If not, raise an error. Else, return the path."""
@@ -113,6 +121,8 @@ def define_options(argv):
                               "of this radius (in nm) centered on a given set of "
                               "residue names. You need the --sphere option to "
                               "be set."))
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Increase verbosity")
     args = parser.parse_args(argv)
     # --sphere and --radius have to be used together, let's check this
     if ((args.sphere is None and args.radius is not None) or
@@ -383,113 +393,117 @@ def renumber(lines, start_res=None):
     return out
 
 
-def perform_bilayer_removing(data, ref_lipid_atom, ref_water_atom):
+def perform_bilayer_removing(data, ref_lipid_atom, ref_water_atom, verbose):
     """ Remove the water molecules inside a bilayer"""
 
-    print
-    print("Checking the reference atom...", end='')
+    if verbose:
+        print()
+        print("Checking the reference atom...")
     if not find_ref_atom(data, ref_lipid_atom):
-        print("Oops!")
-        print(("The reference atom {0} for the bilayer was not find. "
-               "Exiting...").format(ref_lipid_atom))
-        sys.exit()
+        raise RefObjectError(("The reference atom {0} for the bilayer was not find. "
+                              "Exiting...").format(ref_lipid_atom))
+
     if not find_ref_atom(data, ref_water_atom):
-        print("Oops!")
-        print(("The reference atom {0} for the water was not find. "
-               "Exiting...").format(ref_water_atom))
-        sys.exit()
-    print("Done!")
+        raise RefObjectError(("The reference atom {0} for the water was not find. "
+                              "Exiting...").format(ref_water_atom))
 
     # Get Z mean for  the upper and lower leaflet
     z_lower, z_upper = z_mean_values(data, ref_lipid_atom)
 
-    print("Removing water inside the bilayer...", end='')
+    if verbose:
+        print("Removing water inside the bilayer...")
+
     # Remove water molecules inside the bilayer
-    temp_lines, wat = remove_water(data, z_upper, z_lower, ref_water_atom)
-    print("Done!")
+    temp_lines, nb_water_removed = remove_water(data, z_upper, z_lower, ref_water_atom)
 
     first_res_number = int(data[2][0:5])
-    print("Renumber residues and atoms...", end='')
+    if verbose:
+        print("Renumber residues and atoms...")
     output = renumber(temp_lines, first_res_number)
-    print("Done!")
 
-    return (output, wat)
+    return (output, nb_water_removed)
 
 
-def perform_sphere_removing(data, sphere_residus, sphere_radius, ref_water_residue):
+def perform_sphere_removing(data, sphere_residus, sphere_radius, ref_water_residue, verbose):
     """
     Remove the water molecules inside a sphere centered on the
     geometrical center of the atom with a given set of residue name
     """
 
-    print("The reference residue for the sphere is {0}".format(", ".join(sphere_residus)))
-    print("The reference residue for the water is {0}".format(ref_water_residue))
-
-    if not find_ref_residue(data, ref_water_residue):
-        print("Oops!")
-        print(("The reference residue {0} for water  was not find. "
-               "Exiting...").format(ref_water_residue))
-        sys.exit()
+    if verbose:
+        print()
+        print("The reference residue for the sphere is {0}".format(", ".join(sphere_residus)))
+        print("The reference residue for the water is {0}".format(ref_water_residue))
 
     for residue in sphere_residus:
         if not find_ref_residue(data, residue):
-            print("Oops!")
-            print(("The reference residue {0} for the sphere  was not find. "
-                   "Exiting...").format(residue))
-            sys.exit()
+            raise RefObjectError(("The reference residue {0} for the sphere was not find. "
+                                  "Exiting...").format(residue))
 
-    print("Get the center of the sphere...", end='')
+    if not find_ref_residue(data, ref_water_residue):
+        raise RefObjectError(("The reference residue {0} for water was not find. "
+                              "Exiting...").format(ref_water_residue))
+
     resids = get_resids(data, sphere_residus)
-    print(resids)
     dic_center = geometric_center(data, resids)
-    print("Done! The center is {0}".format(dic_center))
-    print("Remove water molecules inside the sphere...", end='')
+
     output = data
-    wat = 0
+    sum_water_removed = 0
     for resid, center in dic_center.items():
-        temp_lines, water_removed = remove_sphere(output, ref_water_residue,
-                                                  center, sphere_radius)
+        if verbose:
+            print("Removing water inside the sphere centered ({0:.1f} {1:.1f} {2:.1f})"
+                  " on residue {3}".format(center[0], center[1], center[2], resid))
 
-        print("Done!")
-        wat += water_removed
+        temp_lines, nb_water_removed = remove_sphere(output, ref_water_residue,
+                                                     center, sphere_radius)
+
+        sum_water_removed += nb_water_removed
         first_res_number = int(data[2][0:5])
-        print("Renumber residues and atoms...", end='')
-        output = renumber(temp_lines, first_res_number)
-        print("Done!")
 
-    return (output, wat)
+        output = renumber(temp_lines, first_res_number)
+
+    return (output, sum_water_removed)
 
 
 def main():
-    """Run everythin from the command line"""
+    """
+    Run everythin from the command line
+    """
 
     # Command line parsing
     args = define_options(sys.argv[1:])
 
-    print("The input coordinate file is {0}".format(args.filin))
-    print("The output file will be {0}".format(args.filout))
-    print("The reference atom for the lipid bilayer is {0}".format(args.lipid_atom))
-    print("The reference atom for the water is {0}".format(args.water_atom))
+    if args.verbose:
+        print("The input coordinate file is {0}".format(args.filin))
+        print("The output file will be {0}".format(args.filout))
+        print("The reference atom for the lipid bilayer is {0}".format(args.lipid_atom))
+        print("The reference atom for the water is {0}".format(args.water_atom))
 
-    f = open(args.filin, 'r')
-    data = f.readlines()
-    f.close()
+    with open(args.filin, 'r') as f:
+        data = f.readlines()
 
-    if args.sphere is None:
-        output, wat = perform_bilayer_removing(data, args.lipid_atom, args.water_atom)
-    else:
-        output, wat = perform_sphere_removing(data, args.sphere, args.radius, args.water_residue)
+    try:
+        if args.sphere is None:
+            output, nb_water = perform_bilayer_removing(data, args.lipid_atom,
+                                                        args.water_atom, args.verbose)
+        else:
+            output, nb_water = perform_sphere_removing(data, args.sphere, args.radius,
+                                                       args.water_residue, args.verbose)
 
-    print()
-    print("The old system contained {0} atoms.".format(data[1].strip()))
-    print("{0} water molecules have been removed.".format(wat))
-    print("The new system contains {0} atoms.".format(output[1]))
+        if args.verbose:
+            print()
+        print("The old system contained {0} atoms.".format(data[1].strip()))
+        print("{0} water molecules have been removed.".format(nb_water))
+        print("The new system contains {0} atoms.".format(output[1]))
 
-    # Write in the output file
-    f = open(args.filout, 'w')
-    f.write('\n'.join(output))
-    f.write("\n")
-    f.close()
+        # Write in the output file
+        with open(args.filout, 'w') as f:
+            f.write('\n'.join(output))
+            f.write("\n")
+
+    except RefObjectError, e:
+        print(e)
+        return 1
 
     return 0
 
