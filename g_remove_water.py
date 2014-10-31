@@ -46,7 +46,7 @@ Water molecules removed are found based on their residue name (--water_residue).
 # members are integers. Use the euclidean division operator // to get euclidean
 # divisions.
 from __future__ import division
-
+from __future__ import print_function
 __author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
 __version__ = "1.0"
 
@@ -115,8 +115,8 @@ def define_options(argv):
                               "be set."))
     args = parser.parse_args(argv)
     # --sphere and --radius have to be used together, let's check this
-    if ((args.sphere is None and not args.radius is None) or
-            (args.radius is None and not args.sphere is None)):
+    if ((args.sphere is None and args.radius is not None) or
+            (args.radius is None and args.sphere is not None)):
         raise parser.error(("You need to define both --sphere and --radius in "
                             "order to remove water molecules on a sphere."))
     return args
@@ -127,7 +127,7 @@ def z_mean_values(lines, atm_ref):
 
     z_lower = z_upper = 0.0
 
-    #Get the global Z mean
+    # Get the global Z mean
     z_sum = 0.0
     nb_atoms = nb_lower = nb_upper = 0
     for i in lines:
@@ -137,7 +137,7 @@ def z_mean_values(lines, atm_ref):
             nb_atoms += 1
     z_mean = z_sum / float(nb_atoms)
 
-    #Z mean for the upper and lower leaflet
+    # Z mean for the upper and lower leaflet
     for i in lines:
         atom_name = i[10:15].strip()
         if atom_name == atm_ref:
@@ -157,8 +157,9 @@ def z_mean_values(lines, atm_ref):
 
 def remove_water(lines, z_upper, z_lower, atom_water):
     """Return  a list containing all lines of the gro file to keep"""
+
     reslines = []  # Lines which will be write in the output file
-    #Appends the first 2 lines (i.e. Title and Number of atoms)
+    # Appends the first 2 lines (i.e. Title and Number of atoms)
     reslines.append(lines[0].strip())
     reslines.append(lines[1].strip())
 
@@ -184,9 +185,9 @@ def remove_water(lines, z_upper, z_lower, atom_water):
             nb_atoms += 1  # 1 line = 1 atom
             reslines.append(i[:-1])
 
-    #Update the final number of atoms
+    # Update the final number of atoms
     reslines[1] = str(nb_atoms)
-    #Append the last line of the gro file (Box vectors)
+    # Append the last line of the gro file (Box vectors)
     reslines.append(lines[-1])
 
     return reslines, nb_res_water
@@ -197,13 +198,13 @@ def geometric_center(lines, resids):
     Get the isobarycenter of the atoms having the given residue id.
 
     The "resids" argument is a list of tuple containing the residue id and
-    the numbero of atoms. 
+    the number of atoms.
     An atom is taken into account if its residue name is in the list.
     """
 
-    #Get only the resids
-    list_resids = [i for i,j in resids]
-    #Init the dic
+    # Get only the resids
+    list_resids = [i for i, j in resids]
+    # Init the dic
     dic_coords = {}
     for resid in list_resids:
         dic_coords[resid] = [0] * 3
@@ -224,7 +225,7 @@ def geometric_center(lines, resids):
             prev_resid += 1
 
     # Do the averaging
-    for resid,nb_atoms in resids:
+    for resid, nb_atoms in resids:
         for i in xrange(3):
             dic_coords[resid][i] /= nb_atoms
 
@@ -262,10 +263,10 @@ def remove_sphere(lines, resnames, center, radius):
         resid = int(line[0:5])
         coords = [float(line[begin:end]) for begin, end in COORDINATE_INDEX]
         if (resname in resnames
-                and ((not inhibit_resid is None and resid == inhibit_resid)
+                and ((inhibit_resid is not None and resid == inhibit_resid)
                      or sq_distance(center, coords) <= sq_radius)):
-            #Update the number of water molecules removed
-            if (prev_resid != resid): #To avoid adding H
+            # Update the number of water molecules removed
+            if (prev_resid != resid):  # To avoid adding H
                 nb_res_water += 1
             # The atom is inside the sphere
             # Remove previously added atoms from the residue
@@ -274,14 +275,14 @@ def remove_sphere(lines, resnames, center, radius):
             # Set the inhibition
             inhibit_resid = resid
 
-            #Update the prev_resid
+            # Update the prev_resid
             prev_resid = resid
         else:
             reslines.append(line)
             inhibit_resid = None
 
     # We want to keep the box definition
-    #reslines.append(lines[-1][:-1])
+    # reslines.append(lines[-1][:-1])
     reslines.append(lines[-1])
     # Update the number of atoms
     reslines[1] = str(len(reslines) - 3)
@@ -298,6 +299,7 @@ def find_ref_atom(lines, ref_atom):
             return True
     return False
 
+
 def find_ref_residue(lines, ref_residue):
     """Return a boolean whether the "residue" was find in the file"""
 
@@ -307,8 +309,9 @@ def find_ref_residue(lines, ref_residue):
             return True
     return False
 
+
 def get_resids(lines, resnames):
-    """Return list of tuples containing the resid 
+    """Return list of tuples containing the resid
     and the number of atomes from the resnames"""
 
     res_ids = []
@@ -329,17 +332,18 @@ def get_resids(lines, resnames):
         if resid != prev_resid:
             prev_resid += 1
 
-    #If the molecule 'resnames' is the last one
+    # If the molecule 'resnames' is the last one
     if lines[-2][5:10].strip() in resnames:
         res_ids.append((resid, nb_atoms))
 
     return res_ids
 
+
 def renumber(lines, start_res=None):
     """Renum the atoms and the residues in a file"""
 
     out = []
-    #Appends the first 2 lines (ie Title and Number of atoms)
+    # Appends the first 2 lines (ie Title and Number of atoms)
     out.append(lines[0].strip())
     out.append(lines[1].strip())
 
@@ -357,7 +361,7 @@ def renumber(lines, start_res=None):
             else:
                 output_res = 1
 
-        #New residue
+        # New residue
         if i[0:5] != current_res:
             if output_res == 99999:  # cannot go to 100000
                 output_res = 1
@@ -370,10 +374,10 @@ def renumber(lines, start_res=None):
         else:
             output_atom += 1
 
-        #Append the line with the correct number of residues and atoms
+        # Append the line with the correct number of residues and atoms
         out.append("%5i%s%5i%s" % (output_res, i[5:15], output_atom, i[20:]))
 
-    #Save the last line (box vectors)
+    # Save the last line (box vectors)
     out.append(lines[-1])
 
     return out
@@ -381,7 +385,7 @@ def renumber(lines, start_res=None):
 
 if __name__ == '__main__':
 
-    #Command line parsing
+    # Command line parsing
     args = define_options(sys.argv[1:])
 
     filin = args.filin
@@ -389,11 +393,10 @@ if __name__ == '__main__':
     lipid_atom = args.lipid_atom
     water_atom = args.water_atom
 
-
-    print "The input coordinate file is {0}".format(filin)
-    print "The output file will be {0}".format(filout)
-    print "The reference atom for the lipid bilayer is {0}".format(lipid_atom)
-    print "The reference atom for the water is {0}".format(water_atom)
+    print("The input coordinate file is {0}".format(filin))
+    print("The output file will be {0}".format(filout))
+    print("The reference atom for the lipid bilayer is {0}".format(lipid_atom))
+    print("The reference atom for the water is {0}".format(water_atom))
 
     f = open(filin, 'r')
     data = f.readlines()
@@ -402,69 +405,69 @@ if __name__ == '__main__':
     wat = 0
     if args.sphere is None:
         print
-        print "Checking the reference atom...",
+        print("Checking the reference atom...", end='')
         if not find_ref_atom(data, lipid_atom):
-            print "Oops!"
-            print ("The reference atom {0} for the bilayer was not find. "
-                   "Exiting...").format(lipid_atom)
+            print("Oops!")
+            print(("The reference atom {0} for the bilayer was not find. "
+                   "Exiting...").format(lipid_atom))
             sys.exit()
         if not find_ref_atom(data, water_atom):
-            print "Oops!"
-            print ("The reference atom {0} for the water was not find. "
-                   "Exiting...").format(water_atom)
+            print("Oops!")
+            print(("The reference atom {0} for the water was not find. "
+                   "Exiting...").format(water_atom))
             sys.exit()
-            print "Done!"
+            print("Done!")
 
-        #Get Z mean for  the upper and lower leaflet
+        # Get Z mean for  the upper and lower leaflet
         z_lower, z_upper = z_mean_values(data, lipid_atom)
 
-        print "Removing water inside the bilayer...",
-        #Remove water molecules inside the bilayer
-        temp_lines, wat = remove_water(data, z_upper, z_lower,
-                                                 water_atom)
-        print "Done!"
+        print("Removing water inside the bilayer...", end='')
+        # Remove water molecules inside the bilayer
+        temp_lines, wat = remove_water(data, z_upper, z_lower, water_atom)
+        print("Done!")
 
         first_res_number = int(data[2][0:5])
-        print "Renumber residues and atoms...",
+        print("Renumber residues and atoms...", end='')
         output = renumber(temp_lines, first_res_number)
-        print "Done!"
+        print("Done!")
     else:
-        print "The reference residue for the sphere is {0}".format(", ".join(args.sphere))
-        print "The reference residue for the water is {0}".format(args.water_residue)
+        print("The reference residue for the sphere is {0}".format(", ".join(args.sphere)))
+        print("The reference residue for the water is {0}".format(args.water_residue))
         if not find_ref_residue(data, args.water_residue):
-            print "Oops!"
-            print ("The reference residue {0} for water  was not find. "
-                   "Exiting...").format(args.water_residue)
+            print("Oops!")
+            print(("The reference residue {0} for water  was not find. "
+                   "Exiting...").format(args.water_residue))
             sys.exit()
         for res in args.sphere:
             if not find_ref_residue(data, res):
-                print "Oops!"
-                print ("The reference residue {0} for the sphere  was not find. "
-                       "Exiting...").format(res)
+                print("Oops!")
+                print(("The reference residue {0} for the sphere  was not find. "
+                       "Exiting...").format(res))
                 sys.exit()
 
-        print "Get the center of the sphere...",
+        print("Get the center of the sphere...", end='')
         resids = get_resids(data, args.sphere)
-        print resids
+        print(resids)
         dic_center = geometric_center(data, resids)
-        print "Done! The center is {0}".format(dic_center)
-        print "Remove water molecules inside the sphere...",
-        output=data
-        for resid,center in dic_center.items():
-            temp_lines, water_removed = remove_sphere(output, args.water_residue, center, args.radius)
-            print "Done!"
+        print("Done! The center is {0}".format(dic_center))
+        print("Remove water molecules inside the sphere...", end='')
+        output = data
+        for resid, center in dic_center.items():
+            temp_lines, water_removed = remove_sphere(output, args.water_residue,
+                                                      center, args.radius)
+            print("Done!")
             wat += water_removed
             first_res_number = int(data[2][0:5])
-            print "Renumber residues and atoms...",
+            print("Renumber residues and atoms...", end='')
             output = renumber(temp_lines, first_res_number)
-            print "Done!"
+            print("Done!")
 
     print
-    print "The old system contained {0} atoms.".format(data[1].strip())
-    print "{0} water molecules have been removed.".format(wat)
-    print "The new system contains {0} atoms.".format(output[1])
+    print("The old system contained {0} atoms.".format(data[1].strip()))
+    print("{0} water molecules have been removed.".format(wat))
+    print("The new system contains {0} atoms.".format(output[1]))
 
-    #Write in the output file
+    # Write in the output file
     f = open(filout, 'w')
     f.write('\n'.join(output))
     f.write("\n")
