@@ -450,6 +450,9 @@ def perform_sphere_removing(data, sphere_residus, sphere_radius, ref_water_resid
     resids = get_resids(data, sphere_residus)
     dic_center = geometric_center(data, resids)
 
+    if not verbose:
+        print("Removing water molecules...")
+
     output = data
     sum_water_removed = 0
     for resid, center in dic_center.items():
