@@ -288,7 +288,10 @@ def remove_sphere(lines, resnames, center, radius):
             # Update the prev_resid
             prev_resid = resid
         else:
-            reslines.append(line[:-1])
+            if line[-1] == '\n':
+                reslines.append(line[:-1])
+            else:
+                reslines.append(line)
             inhibit_resid = None
 
     # We want to keep the box definition
