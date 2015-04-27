@@ -5,6 +5,13 @@ python:
     - "3.3"
     - "3.4"
 # command to install dependencies
+install:
+  - pip install python-coveralls
+  - pip install coverage
+  - pip install nose
+
 # command to run tests
 script:
-    - nosetests test_g_remove_water.py
+    - nosetests --with-coverage --cover-package=groIO,g_remove_water test_g_remove_water.py
+after_success:
+    - coveralls
