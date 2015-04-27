@@ -1,6 +1,13 @@
 g_remove_water
 ===========
 
+.. image:: https://travis-ci.org/HubLot/g_remove_water.svg?branch=master
+   :target: https://travis-ci.org/HubLot/g_remove_water
+.. image:: https://coveralls.io/repos/HubLot/g_remove_water/badge.svg?branch=master
+   :target: https://coveralls.io/r/HubLot/g_remove_water?branch=master 
+
+
+
 Takes a gro file containing a bilayer and remove any water
 molecules inside the bilayer.
 
