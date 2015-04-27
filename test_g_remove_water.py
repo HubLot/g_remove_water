@@ -30,6 +30,12 @@ import contextlib
 import groIO
 import g_remove_water as grw
 
+# Python 2.X/3.X compatibility
+try:
+    range = xrange
+except:
+    pass
+
 __author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
 __version__ = "1.0"
 
@@ -246,11 +252,11 @@ def residue_numbers(topology, start_res=1):
     """
     resid = start_res - 1
     for natoms, nresidues in topology:
-        for residue in xrange(nresidues):
+        for residue in range(nresidues):
             resid += 1
             if resid > 99999:
                 resid = 1
-            for atoms in xrange(natoms):
+            for atoms in range(natoms):
                 yield resid
 
 

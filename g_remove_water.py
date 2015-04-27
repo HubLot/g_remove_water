@@ -407,7 +407,7 @@ def main():
             for line in groIO.write_gro(title, output_atoms, box):
                 print(line, end='', file=fout)
 
-    except RefObjectError, e:
+    except RefObjectError as e:
         print(e)
         return 1
 
