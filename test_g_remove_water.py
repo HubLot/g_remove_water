@@ -27,6 +27,7 @@ from unittest import TestCase, main
 import os
 import sys
 import contextlib
+import groIO
 import g_remove_water as grw
 
 __author__ = "Marc Gueroult, Hubert Santuz & Jonathan Barnoud"
@@ -50,15 +51,16 @@ class TestGeneral(TestCase):
         atom is present or absent from the file body.
         """
         path = os.path.join(REFDIR, "regular.gro")
-        lines = open(path).readlines()
+        title, atoms, box = groIO.parse_file(path)
+
         # P1 is present in the file
-        self.assertTrue(grw.find_ref_atom(lines, "P1"),
+        self.assertTrue(grw.find_ref_atom(atoms, "P1"),
                         "P1 should be find in {0} body.".format(path))
         # ABS is absent from the file
-        self.assertFalse(grw.find_ref_atom(lines, "ABS"),
+        self.assertFalse(grw.find_ref_atom(atoms, "ABS"),
                          "ABS should not be find in {0} body.".format(path))
         # AA is present at the right place in the header but should be ignored
-        self.assertFalse(grw.find_ref_atom(lines, "AA"),
+        self.assertFalse(grw.find_ref_atom(atoms, "AA"),
                          "AA should be ignored in {0} head.".format(path))
 
     def test_renumber_noarg(self):
@@ -67,31 +69,16 @@ class TestGeneral(TestCase):
         start_res argument.
         """
         path = os.path.join(REFDIR, "regular.gro")
-        removed_res = (10, 50, 60)
-        # Remove some residues and renumber atoms and residues
-        with open(path) as infile:
-            renumbered = _create_runumbered(infile, removed_res)
-        # Check numbering
-        # (number of atom per residue, number of residue)
-        topology = ((52, 72 - len(removed_res)), (3, 3739))
-        _test_renumber(renumbered, topology, 1)
+        title, atoms, box = groIO.parse_file(path)
 
-    def test_renumber_start_res(self):
-        """
-        Test the atom renumbering with the renumber function with the
-        start_res argument. This is testing both the start-res argument and the
-        ability to handle residue number bigger than 99999.
-        """
-        path = os.path.join(REFDIR, "regular.gro")
         removed_res = (10, 50, 60)
-        start_res = 98999
         # Remove some residues and renumber atoms and residues
-        with open(path) as infile:
-            renumbered = _create_runumbered(infile, removed_res, start_res)
+        renumbered = _create_runumbered(atoms, removed_res)
         # Check numbering
         # (number of atom per residue, number of residue)
         topology = ((52, 72 - len(removed_res)), (3, 3739))
-        _test_renumber(renumbered, topology, start_res)
+        print("topol {0}".format(topology))
+        _test_renumber(renumbered, topology)
 
 
 class TestSlice(TestCase):
@@ -113,8 +100,9 @@ class TestSlice(TestCase):
         # (2.688, 2.50058)
 
         path = os.path.join(REFDIR, "regular.gro")
-        lines = open(path).readlines()
-        z_low, z_top = grw.z_mean_values(lines, "P1")
+        title, atoms, box = groIO.parse_file(path)
+
+        z_low, z_top = grw.z_mean_values(atoms, "P1")
         self.assertAlmostEqual(reference[0], z_low, PRECISION,
                                ("Z mean value for the lower leaflet do not "
                                 "match with {0} places: {1} instead of {2}")
@@ -159,12 +147,14 @@ class TestSphere(TestCase):
         Reference coordinates were calculated with g_traj. The output of the
         program is available in test_resources/center.xvg.
         """
-        reference = (0.000216667, 0.00045, 5.00003e-05)
-        resnames = ["C60"]
+        reference = {"x":0.000216667, "y":0.00045, "z":5.00003e-05}
+        resids = [1]
         path = os.path.join(REFDIR, "center.gro")
-        lines = open(path).readlines()
-        center = grw.geometric_center(lines, resnames)
-        for ref, value in zip(reference, center):
+        title, atoms, box = groIO.parse_file(path)
+
+        center = grw.geometric_center(atoms, resids)
+
+        for ref, value in zip(reference.values(), center[resids[0]].values()):
             self.assertAlmostEqual(ref, value, PRECISION,
                                    ("Geometric center is wrong: "
                                     "{0} instead of {1}")
@@ -189,9 +179,10 @@ class TestSphere(TestCase):
         """
         Test if define_options complains about nul --radius.
         """
-        argv = ["-f", "{0}/regular.gro".format(REFDIR),
-                "--sphere", "ARG", "--radius", "0.0"]
-        self.assertRaises(Exception, grw.define_options, *[argv])
+        with _redirect_stderr(sys.stdout):
+            argv = ["-f", "{0}/regular.gro".format(REFDIR),
+                    "--sphere", "ARG", "--radius", "0.0"]
+            self.assertRaises(SystemExit, grw.define_options, *[argv])
 
     def test_define_options_sphere_radius_missing(self):
         """
@@ -263,41 +254,38 @@ def residue_numbers(topology, start_res=1):
                 yield resid
 
 
-def _create_runumbered(infile, removed_res, start_res=None):
+def _create_runumbered(atoms, removed_res):
     """
     Remove residues from a structure and renumber the atoms and residues.
 
     :Parameters:
-        - infile: the opened file to read
+        - atoms: the list of dictionnary for atoms
         - remove_res: a list of resid to remove from the structure
-        - start_res: the initial residue number in the renumbered structure
 
     :Returns:
-        - the lines from the renumbered structure
+        - the new list renumbered
     """
-    lines = infile.readlines()
     # Remove some residues
-    keep = lines[:2] + [line for line in lines[2:-1]
-                        if not int(line[0:5]) in removed_res] + [line[-1]]
+    keep = [atom for atom in atoms if not atom['resid'] in removed_res]
     # Renumber residues and atoms
-    renumbered = grw.renumber(keep, start_res)
+    renumbered = grw.renumber(keep)
     return renumbered
 
 
-def _test_renumber(lines, topology, start_res):
+def _test_renumber(atoms, topology):
     """
     Test atom renumbering in various conditions.
 
     :Parameters:
-        - lines: the lines of the gro file in a list
+        - atoms: the list of dictionnary for atoms
         - topology: the residue succession, see :func:`residue_numbers`
         - start_res: the initial residue number in the renumbered structure
     """
-    for line_number, (ref_resid, line) \
-            in enumerate(zip(residue_numbers(topology, start_res),
-                             lines[2:-1])):
-        resid = int(line[0:5])
-        atomid = int(line[15:20])
+    for line_number, (ref_resid, atom) \
+            in enumerate(zip(residue_numbers(topology),
+                             atoms)):
+        resid = atom["resid"]
+        atomid = atom["atomid"]
         ref_atomid = line_number + 1
         # Check the residue
         assert resid == ref_resid, \
