@@ -117,6 +117,8 @@ def define_options(argv):
             (args.radius is None and args.sphere is not None)):
         raise parser.error(("You need to define both --sphere and --radius in "
                             "order to remove water molecules on a sphere."))
+    if (args.radius is not None and args.radius <= 0.0):
+        raise parser.error("The sphere radius can't be negative or null.")
     return args
 
 
@@ -202,7 +204,7 @@ def sq_distance(point_a, point_b):
     """
     Compute the square of the euclidean distance between two points.
     """
-    return sum((a - b) * (a - b) for a, b in zip(point_a.values(), point_b.values()))
+    return sum((a - b) * (a - b) for a, b in zip(point_a, point_b))
 
 
 def remove_sphere(atoms, resnames, center, radius):
@@ -227,7 +229,7 @@ def remove_sphere(atoms, resnames, center, radius):
         coords = {key: atom[key] for key in atom.keys() if key in ['x', 'y', 'z']}
         if (atom['resname'] in resnames
                 and ((inhibit_resid is not None and resid == inhibit_resid)
-                     or sq_distance(center, coords) <= sq_radius)):
+                     or sq_distance(center.values(), coords.values()) <= sq_radius)):
             # Update the number of water molecules removed
             if (prev_resid != resid):  # To avoid adding H
                 nb_res_water += 1
