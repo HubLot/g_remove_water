@@ -28,24 +28,31 @@ to set the list of residue names to use for the center calculation and
 
 Usage
 -----
-g_remove_water.py [-h] -f coord.gro [-o out.gro] [--water_atom OW] [(--lipid_atom P1 | --sphere RES [RES ...] --radius RADIUS)]
+g_remove_water.py -f coord.gro [options]
 
-required arguments:
-    -f FILE             The Structure file newly solvated (.gro)
+The programs require an inpute file (``-f`` option) in a GRO file format.
+It writes the output in a GRO file with a default name ``out.gro``. It can be change with the ``-`` option.
 
-optional arguments:
-    -h, --help                     Show this help message and exit
-    -o FILE                        The Output file (.gro)
-    --lipid_atom P1                The reference atom for the bilayer (P1 by default)
-    --water_atom OW                The reference atom for the water. Use the oxygen.
-                                   (OW by default)
-    --sphere RESNAME [RESNAME ...] Remove water molecules if they are in a
-                                   sphere centered on the geometric center of
-                                   atoms with the given residue names. You
-                                   need the --radius option to be filled.
-    --radius RADIUS                Remove water molecules if they are in a sphere of this
-                                   radius centered on a given set of residue names. You
-                                   need the --sphere option to be set.
+
+Options
+~~~~~~~
+-f FILE:
+    The input file (.gro)
+-o FILE:
+    The Output file (.gro)
+--lipid_atom:
+    The reference atom for the bilayer (P1 by default)
+--water_atom:
+    The reference atom for the water. Use the oxygen. (OW by default)
+--sphere:
+    Remove water molecules if they are in a sphere centered on the geometric
+    center of atoms with the given residue names.
+    You need the ``--radius`` option to be filled.
+    Multiple resnames can be given.
+--radius:
+    Remove water molecules if they are in a sphere of this
+    radius centered on a given set of residue names.
+    You need the ``--sphere`` option to be set.
 
 Run tests
 ---------
