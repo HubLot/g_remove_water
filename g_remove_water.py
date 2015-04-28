@@ -55,6 +55,7 @@ import argparse
 # Handle GRO format
 import groIO
 
+
 # Exception to handle the missing references objects (atom or residue)
 class RefObjectError(Exception):
     def __init__(self, value):
@@ -161,10 +162,10 @@ def remove_water(atoms, z_upper, z_lower, atom_water):
     nb_atoms = 0  # Total number of atoms
     nb_res_water = 0  # Number of waters molecules removed
 
-    for atom in atoms: 
+    for atom in atoms:
         to_store = True    # Does we store the line in the result ?
         ref_resid = atom['resid']
-        if atom['atom_name'] == atom_water: 
+        if atom['atom_name'] == atom_water:
             if z_lower < atom['z'] < z_upper:    # Water in bilayer
                 # Store the residue number of the water to removed
                 atom_resid = atom['resid']
@@ -176,7 +177,6 @@ def remove_water(atoms, z_upper, z_lower, atom_water):
         if to_store and ref_resid != atom_resid:
             nb_atoms += 1  # 1 line = 1 atom
             new_atoms.append(atom)
-
 
     return new_atoms, nb_res_water
 
@@ -275,7 +275,6 @@ def get_resids(atoms, res_name):
     return list(set(res_ids))
 
 
-
 def perform_bilayer_removing(atoms, ref_lipid_atom, ref_water_atom, verbose):
     """ Remove the water molecules inside a bilayer"""
 
@@ -306,7 +305,8 @@ def perform_bilayer_removing(atoms, ref_lipid_atom, ref_water_atom, verbose):
     return (output, nb_water_removed)
 
 
-def perform_sphere_removing(atoms, sphere_residus, sphere_radius, ref_water_residue, verbose):
+def perform_sphere_removing(atoms, sphere_residus, sphere_radius,
+                            ref_water_residue, verbose):
     """
     Remove the water molecules inside a sphere centered on the
     geometrical center of the atom with a given set of residue name
@@ -340,7 +340,7 @@ def perform_sphere_removing(atoms, sphere_residus, sphere_radius, ref_water_resi
                   " on residue {res}".format(res=resid, **center))
 
         tmp_atoms, nb_water_removed = remove_sphere(output_atoms, ref_water_residue,
-                                                     center, sphere_radius)
+                                                    center, sphere_radius)
 
         sum_water_removed += nb_water_removed
 
@@ -357,7 +357,6 @@ def main():
     # Command line parsing
     args = define_options(sys.argv[1:])
 
-
     try:
         title, atoms, box = groIO.parse_file(args.filin)
     except groIO.FormatError as e:
@@ -370,18 +369,17 @@ def main():
         print("The reference atom for the lipid bilayer is {0}".format(args.lipid_atom))
         print("The reference atom for the water is {0}".format(args.water_atom))
 
-
     try:
         if args.sphere is None:
             output_atoms, nb_water = perform_bilayer_removing(atoms, args.lipid_atom,
-                                                        args.water_atom, args.verbose)
+                                                              args.water_atom, args.verbose)
         else:
             output_atoms, nb_water = perform_sphere_removing(atoms, args.sphere, args.radius,
-                                                       args.water_residue, args.verbose)
+                                                             args.water_residue, args.verbose)
 
         if args.verbose:
             print()
-        
+
         print("The old system contained {0} atoms.".format(len(atoms)))
         print("{0} water molecules have been removed.".format(nb_water))
         print("The new system contains {0} atoms.".format(len(output_atoms)))

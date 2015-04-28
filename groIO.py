@@ -37,6 +37,7 @@ GRO_FIELDS = {
     "z": ((36, 44), float),
 }
 
+
 class FormatError(Exception):
     """
     Exception raised when the file format is wrong.
@@ -62,13 +63,14 @@ def parse_file(filin):
 
     with open(filin) as f:
         try:
-            return read_gro(f)        
+            return read_gro(f)
         except FormatError as e:
             raise FormatError("{0} ({1})".format(e, filin))
 
 ################
 # GRO parsing  #
 ################
+
 
 def stop_at_empty_line(iterator):
     """
@@ -112,8 +114,7 @@ def read_gro(lines):
     for header in [title, nb_atoms]:
         try:
             a = dict(((key, convert(header[begin:end].strip()))
-                                   for key, ((begin, end), convert)
-                                   in GRO_FIELDS.items()))
+                      for key, ((begin, end), convert) in GRO_FIELDS.items()))
             raise FormatError("Something is wrong in the format")
         except ValueError:
             pass
@@ -137,6 +138,7 @@ def read_gro(lines):
 ################
 # GRO writing  #
 ################
+
 
 def write_gro(title, atoms, box):
     """
@@ -176,8 +178,8 @@ def renumber(atoms):
         if atom['resid'] != prev_resid:
             resid += 1
             prev_resid = atom['resid']
-        atom['resid'] = resid%100000
-        atom['atomid'] = atomid%100000
+        atom['resid'] = resid % 100000
+        atom['atomid'] = atomid % 100000
         new_atoms.append(atom)
 
     return new_atoms

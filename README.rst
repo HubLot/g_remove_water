@@ -31,7 +31,7 @@ Usage
 g_remove_water.py -f coord.gro [options]
 
 The programs require an inpute file (``-f`` option) in a GRO file format.
-It writes the output in a GRO file with a default name ``out.gro``. It can be change with the ``-`` option.
+It writes the output in a GRO file with a default name ``out.gro``. It can be change with the ``-o`` option.
 
 
 Options

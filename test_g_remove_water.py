@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ class TestGeneral(TestCase):
     """
     Test general infrastructure that is shared with every modes.
     """
+
     def test_find_ref_atom_regular(self):
         """
         Test find_ref_atom function in the regular case where the reference
@@ -136,7 +137,7 @@ class TestSphere(TestCase):
         Reference coordinates were calculated with g_traj. The output of the
         program is available in test_resources/center.xvg.
         """
-        reference = {"x":0.000216667, "y":0.00045, "z":5.00003e-05}
+        reference = {"x": 0.000216667, "y": 0.00045, "z": 5.00003e-05}
         resids = [1]
         path = os.path.join(REFDIR, "center.gro")
         title, atoms, box = groIO.parse_file(path)

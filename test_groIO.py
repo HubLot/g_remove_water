@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ class TestReadWrite(unittest.TestCase):
         nb_atoms = len(atoms)
 
         self.assertEqual(title, "Regular      AA\n")
-        self.assertEqual(box,"   5.15414   5.15414   7.93645\n")
+        self.assertEqual(box, "   5.15414   5.15414   7.93645\n")
         self.assertEqual(nb_atoms, 14961)
 
         # Pick a random atom
@@ -63,7 +63,6 @@ class TestReadWrite(unittest.TestCase):
 
         for key, value in zip(keys_tested, values_tested):
             self.assertEqual(atom[key], value)
-
 
     def test_fail_read(self):
         """
@@ -79,22 +78,21 @@ class TestReadWrite(unittest.TestCase):
                 groIO.parse_file(filin)
                 self.assertEqual("Something is wrong in the format", context.exception)
 
-
     def test_write(self):
         """
         Test the writing of a gro file
         """
 
-        #Create a random file
+        # Create a random file
         title, atoms, box = _generate_file()
 
-        #Write it
+        # Write it
         test_write = os.path.join(REFDIR, "test_write.gro")
         with open(test_write, "w") as fout:
             for line in groIO.write_gro(title, atoms, box):
                 print(line, end='', file=fout)
 
-        #Reference file
+        # Reference file
         ref_write = os.path.join(REFDIR, "write.gro")
 
         with open(ref_write) as f1, open(test_write) as f2:
@@ -119,18 +117,19 @@ def _generate_file():
 
     title = "Write\n"
     atoms = []
-    atoms.append({'resid':1, 'resname':"POPC", 'atom_name':"C31",
-                  'atomid':1, 'x':1.764,  'y':4.587, 'z':2.046})
-    atoms.append({'resid':1, 'resname':"POPC", 'atom_name':"N1",
-                  'atomid':2, 'x':1.824,  'y':4.555, 'z':1.916})
-    atoms.append({'resid':1, 'resname':"POPC", 'atom_name':"C32",
-                  'atomid':3, 'x':1.755,  'y':4.436, 'z':1.864})
-    atoms.append({'resid':1, 'resname':"POPC", 'atom_name':"C33",
-                  'atomid':4, 'x':1.954,  'y':4.503, 'z':1.960})
+    atoms.append({'resid': 1, 'resname': "POPC", 'atom_name': "C31",
+                  'atomid': 1, 'x': 1.764,  'y': 4.587, 'z': 2.046})
+    atoms.append({'resid': 1, 'resname': "POPC", 'atom_name': "N1",
+                  'atomid': 2, 'x': 1.824,  'y': 4.555, 'z': 1.916})
+    atoms.append({'resid': 1, 'resname': "POPC", 'atom_name': "C32",
+                  'atomid': 3, 'x': 1.755,  'y': 4.436, 'z': 1.864})
+    atoms.append({'resid': 1, 'resname': "POPC", 'atom_name': "C33",
+                  'atomid': 4, 'x': 1.954,  'y': 4.503, 'z': 1.960})
 
     box = "   1.000   1.000   1.000\n"
 
     return (title, atoms, box)
+
 
 class TestGrolib(unittest.TestCase):
     """
