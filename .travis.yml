@@ -12,6 +12,6 @@ install:
 
 # command to run tests
 script:
-    - nosetests --with-coverage --cover-package=groIO,g_remove_water test_g_remove_water.py
+    - nosetests --with-coverage --cover-package=groIO,g_remove_water test_groIO.py test_g_remove_water.py
 after_success:
     - coveralls
