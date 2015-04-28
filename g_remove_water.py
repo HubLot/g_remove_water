@@ -360,9 +360,8 @@ def main():
 
     try:
         title, atoms, box = groIO.parse_file(args.filin)
-    except groIO.FormatError:
-        print(("Something is wrong in the format of {0}").format(args.filin),
-               file=sys.stderr)
+    except groIO.FormatError as e:
+        print(e, file=sys.stderr)
         return 1
 
     if args.verbose:
@@ -382,9 +381,10 @@ def main():
 
         if args.verbose:
             print()
-            print("The old system contained {0} atoms.".format(len(atoms)))
-            print("{0} water molecules have been removed.".format(nb_water))
-            print("The new system contains {0} atoms.".format(len(output_atoms)))
+        
+        print("The old system contained {0} atoms.".format(len(atoms)))
+        print("{0} water molecules have been removed.".format(nb_water))
+        print("The new system contains {0} atoms.".format(len(output_atoms)))
 
         # Write in the output file
         with open(args.filout, "w") as fout:

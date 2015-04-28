@@ -41,7 +41,11 @@ class FormatError(Exception):
     """
     Exception raised when the file format is wrong.
     """
-    pass
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value
 
 
 def parse_file(filin):
@@ -59,8 +63,8 @@ def parse_file(filin):
     with open(filin) as f:
         try:
             return read_gro(f)        
-        except FormatError:
-            raise FormatError
+        except FormatError as e:
+            raise FormatError("{0} ({1})".format(e, filin))
 
 ################
 # GRO parsing  #
@@ -114,7 +118,7 @@ def read_gro(lines):
                                in GRO_FIELDS.items())))
             prev_line = line
         except ValueError:
-            raise FormatError
+            raise FormatError("Something is wrong in the format")
     box = prev_line
     return (title, atoms, box)
 
