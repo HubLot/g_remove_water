@@ -17,7 +17,7 @@
 """ A simple library to handle the reading and writing of GRO file """
 
 
-__author__ = "Jonathan Barnoud"
+__author__ = "Jonathan Barnoud, Hubert Santuz"
 
 
 import itertools
@@ -63,7 +63,7 @@ def parse_file(filin):
             raise FormatError
 
 ################
-# GRO handling #
+# GRO parsing  #
 ################
 
 def stop_at_empty_line(iterator):
@@ -118,6 +118,9 @@ def read_gro(lines):
     box = prev_line
     return (title, atoms, box)
 
+################
+# GRO writing  #
+################
 
 def write_gro(title, atoms, box):
     """
@@ -134,3 +137,31 @@ def write_gro(title, atoms, box):
         yield ('{resid:>5}{resname:<5}{atom_name:>5}{atomid:>5}'
                '{x:8.3f}{y:8.3f}{z:8.3f}\n').format(**atom)
     yield box
+
+
+#####################
+# Useful functions  #
+#####################
+
+def renumber(atoms):
+    """
+    Renumber the atoms and the residues from a list of atom.
+
+    :Parameters:
+        - atoms: a list of atom, each atom is stored as a dictionary
+
+    :Returns:
+        - new_atoms: the new list renumbered
+    """
+    new_atoms = []
+    resid = 0
+    prev_resid = 0
+    for atomid, atom in enumerate(atoms, start=1):
+        if atom['resid'] != prev_resid:
+            resid += 1
+            prev_resid = atom['resid']
+        atom['resid'] = resid%100000
+        atom['atomid'] = atomid%100000
+        new_atoms.append(atom)
+
+    return new_atoms

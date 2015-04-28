@@ -83,7 +83,6 @@ class TestGeneral(TestCase):
         # Check numbering
         # (number of atom per residue, number of residue)
         topology = ((52, 72 - len(removed_res)), (3, 3739))
-        print("topol {0}".format(topology))
         _test_renumber(renumbered, topology)
 
 
@@ -274,7 +273,7 @@ def _create_runumbered(atoms, removed_res):
     # Remove some residues
     keep = [atom for atom in atoms if not atom['resid'] in removed_res]
     # Renumber residues and atoms
-    renumbered = grw.renumber(keep)
+    renumbered = groIO.renumber(keep)
     return renumbered
 
 

@@ -275,22 +275,6 @@ def get_resids(atoms, res_name):
     return list(set(res_ids))
 
 
-def renumber(atoms):
-    """Renum the atoms and the residues in a file"""
-
-    new_atoms = []
-    resid = 0
-    prev_resid = 0
-    for atomid, atom in enumerate(atoms, start=1):
-        if atom['resid'] != prev_resid:
-            resid += 1
-            prev_resid = atom['resid']
-        atom['resid'] = resid%100000
-        atom['atomid'] = atomid%100000
-        new_atoms.append(atom)
-
-    return new_atoms
-
 
 def perform_bilayer_removing(atoms, ref_lipid_atom, ref_water_atom, verbose):
     """ Remove the water molecules inside a bilayer"""
@@ -317,7 +301,7 @@ def perform_bilayer_removing(atoms, ref_lipid_atom, ref_water_atom, verbose):
 
     if verbose:
         print("Renumber residues and atoms...")
-    output = renumber(temp_atoms)
+    output = groIO.renumber(temp_atoms)
 
     return (output, nb_water_removed)
 
@@ -360,7 +344,7 @@ def perform_sphere_removing(atoms, sphere_residus, sphere_radius, ref_water_resi
 
         sum_water_removed += nb_water_removed
 
-        output_atoms = renumber(tmp_atoms)
+        output_atoms = groIO.renumber(tmp_atoms)
 
     return (output_atoms, sum_water_removed)
 
