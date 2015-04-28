@@ -70,7 +70,7 @@ class TestReadWrite(unittest.TestCase):
         Test the bad formating of a gro file
         """
 
-        files = ["fail.gro", "fail_100000.gro"]
+        files = ["fail.gro", "fail_100000.gro", "missing_total_atoms.gro"]
         files_desc = [os.path.join(REFDIR, filin) for filin in files]
         print(files_desc)
 

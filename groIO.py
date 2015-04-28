@@ -105,7 +105,19 @@ def read_gro(lines):
     lines = iter(lines)
     # The two first lines are a header
     title = next(lines)
-    next(lines)  # This is the number of atoms, we do not care
+    nb_atoms = next(lines)  # This is the number of atoms, we do not care
+
+    # Try to parse the 2 above lines as an atom line.
+    # If sucess, it means there is a missing header line
+    for header in [title, nb_atoms]:
+        try:
+            a = dict(((key, convert(header[begin:end].strip()))
+                                   for key, ((begin, end), convert)
+                                   in GRO_FIELDS.items()))
+            raise FormatError("Something is wrong in the format")
+        except ValueError:
+            pass
+
     # Loop over the lines but act on the previous one. We are reading atoms and
     # we do not want to consider the last line (the box description) as an
     # atom.
