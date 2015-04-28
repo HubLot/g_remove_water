@@ -69,22 +69,6 @@ class TestGeneral(TestCase):
         self.assertFalse(grw.find_ref_atom(atoms, "AA"),
                          "AA should be ignored in {0} head.".format(path))
 
-    def test_renumber_noarg(self):
-        """
-        Test the atom renumbering with the renumber function without the
-        start_res argument.
-        """
-        path = os.path.join(REFDIR, "regular.gro")
-        title, atoms, box = groIO.parse_file(path)
-
-        removed_res = (10, 50, 60)
-        # Remove some residues and renumber atoms and residues
-        renumbered = _create_runumbered(atoms, removed_res)
-        # Check numbering
-        # (number of atom per residue, number of residue)
-        topology = ((52, 72 - len(removed_res)), (3, 3739))
-        _test_renumber(renumbered, topology)
-
 
 class TestSlice(TestCase):
     """
@@ -235,73 +219,6 @@ def _redirect_stderr(destination=sys.stdout):
     yield
     sys.stderr = old_stderr
 
-
-def residue_numbers(topology, start_res=1):
-    """
-    Generate residue numbers according to a topology.
-
-    Topology is a list of successive succession of residues described as
-    (number of atom per residue, number of residue). For instance, a succession
-    of 8 residue of 10 atoms each followed by 5 residues of 3 atoms each is
-    described as ((10, 8), (3, 5)).
-
-    :Parameters:
-        - topology: the residue succession as described above
-        - start_res: the number of the first residue
-    """
-    resid = start_res - 1
-    for natoms, nresidues in topology:
-        for residue in range(nresidues):
-            resid += 1
-            if resid > 99999:
-                resid = 1
-            for atoms in range(natoms):
-                yield resid
-
-
-def _create_runumbered(atoms, removed_res):
-    """
-    Remove residues from a structure and renumber the atoms and residues.
-
-    :Parameters:
-        - atoms: the list of dictionnary for atoms
-        - remove_res: a list of resid to remove from the structure
-
-    :Returns:
-        - the new list renumbered
-    """
-    # Remove some residues
-    keep = [atom for atom in atoms if not atom['resid'] in removed_res]
-    # Renumber residues and atoms
-    renumbered = groIO.renumber(keep)
-    return renumbered
-
-
-def _test_renumber(atoms, topology):
-    """
-    Test atom renumbering in various conditions.
-
-    :Parameters:
-        - atoms: the list of dictionnary for atoms
-        - topology: the residue succession, see :func:`residue_numbers`
-        - start_res: the initial residue number in the renumbered structure
-    """
-    for line_number, (ref_resid, atom) \
-            in enumerate(zip(residue_numbers(topology),
-                             atoms)):
-        resid = atom["resid"]
-        atomid = atom["atomid"]
-        ref_atomid = line_number + 1
-        # Check the residue
-        assert resid == ref_resid, \
-            ("Residue ID is wrong after renumbering: "
-             "{0} instead of {1} at line {2}").format(
-                 resid, ref_resid, line_number + 3)
-        # Check the atom
-        assert atomid == ref_atomid, \
-            ("Atom ID is wrong after renumbering: "
-             "{0} instead of {1} at line {2}").format(
-                 atomid, ref_atomid, line_number + 3)
 
 if __name__ == "__main__":
     main()
