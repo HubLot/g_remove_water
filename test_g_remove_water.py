@@ -23,7 +23,7 @@ Unit tests for g_remove_water.
 # divisions.
 from __future__ import division
 from __future__ import with_statement
-from unittest import TestCase, main
+import unittest
 import os
 import sys
 import contextlib
@@ -47,10 +47,17 @@ REFDIR = "test_resources"
 PRECISION = 4
 
 
-class TestGeneral(TestCase):
+class TestGeneral(unittest.TestCase):
     """
     Test general infrastructure that is shared with every modes.
     """
+    def test_missing_file(self):
+        """
+        Test if the input file is missing
+        """
+        with _redirect_stderr(sys.stdout):
+            argv = ["-f", "{0}/pouet.gro".format(REFDIR)]
+            self.assertRaises(SystemExit, grw.define_options, *[argv])
 
     def test_find_ref_atom_regular(self):
         """
@@ -70,8 +77,33 @@ class TestGeneral(TestCase):
         self.assertFalse(grw.find_ref_atom(atoms, "AA"),
                          "AA should be ignored in {0} head.".format(path))
 
+    def test_raise_ref_objects(self):
+        """
+        Test if the exception is raised when reference objects (atom or residue)
+        are missing in the file.
+        """
 
-class TestSlice(TestCase):
+        path = os.path.join(REFDIR, "regular.gro")
+        title, atoms, box = groIO.parse_file(path)
+
+        # Lipid atom
+        with self.assertRaises(grw.RefObjectError) as context:
+            grw.perform_bilayer_removing(atoms, "P12", "OW", verbose=False)
+
+        # Water atom
+        with self.assertRaises(grw.RefObjectError) as context:
+            grw.perform_bilayer_removing(atoms, "P1", "IEW", verbose=False)
+
+        # Sphere residue
+        with self.assertRaises(grw.RefObjectError) as context:
+            grw.perform_sphere_removing(atoms, "AZE", 0.4, "SOL", verbose=False)
+
+        # Water residue
+        with self.assertRaises(grw.RefObjectError) as context:
+            grw.perform_sphere_removing(atoms, "POPC", 0.4, "SO", verbose=False)
+
+
+class TestSlice(unittest.TestCase):
     """
     Test slice mode specific functions.
     """
@@ -103,10 +135,22 @@ class TestSlice(TestCase):
                                .format(PRECISION, reference[1], z_top))
 
 
-class TestSphere(TestCase):
+class TestSphere(unittest.TestCase):
     """
     Test sphere mode specific functions.
     """
+    def test_get_resids(self):
+        """
+        Test the mapping of resids from resnames
+        """
+        path = os.path.join(REFDIR, "regular.gro")
+        title, atoms, box = groIO.parse_file(path)
+
+        resname = ["POPC"]
+        resids = list(range(1,73))
+
+        self.assertEqual(grw.get_resids(atoms, resname), resids)
+
     def test_sq_distance(self):
         """
         Test square distance calculation without periodic boundary conditions.
@@ -188,7 +232,7 @@ class TestSphere(TestCase):
             self.assertRaises(SystemExit, grw.define_options, *[argv])
 
 
-class TestProgramm(TestCase):
+class TestProgramm(unittest.TestCase):
     """
     Test the program command line.
     """
@@ -222,4 +266,4 @@ def _redirect_stderr(destination=sys.stdout):
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()
